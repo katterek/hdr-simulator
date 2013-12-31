@@ -143,9 +143,9 @@ class ImageViewer(QtGui.QMainWindow):
         QtGui.QDialog()
         subWindow = inspect.getmembers(selector)
         subWindow.setFixedSize(200,100)
-        area.addSubWindow(subWindow)
+        #area.addSubWindow(subWindow)
         self.setWindowTitle("Set Parameters")
-        self.setCentralWidget(area)
+        #self.setCentralWidget(area)
         self.show()
         
 
