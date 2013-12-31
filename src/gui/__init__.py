@@ -13,17 +13,6 @@ class ImageViewer(QtGui.QMainWindow):
         '''toolbar'''
         self.toolbar = self.addToolBar('Algorithms')
 
-#exit button
-        
-        self.combo=QtGui.QComboBox()
-        self.combo.insertItems(1,["Algorithm A","Algorithm B","Algorithm C"])
-
-        selectRenderAction = QtGui.QAction('Select Render', self)
-        selectRenderAction.triggered.connect(self.selectRender)
-        self.combo.addAction(selectRenderAction)
-        
-        self.toolbar.addWidget(self.combo)
-
 #algorithm selection        
         
         opSelect = QtGui.QComboBox(self)
@@ -123,31 +112,15 @@ class ImageViewer(QtGui.QMainWindow):
         self.updateActions()
 
     def about(self):
-        QtGui.QMessageBox.about(self, "About Image Viewer",
-                "<p>The <b>Image Viewer</b> example shows how to combine "
-                "QLabel and QScrollArea to display an image. QLabel is "
-                "typically used for displaying text, but it can also display "
-                "an image. QScrollArea provides a scrolling view around "
-                "another widget. If the child widget exceeds the size of the "
-                "frame, QScrollArea automatically provides scroll bars.</p>"
-                "<p>The example demonstrates how QLabel's ability to scale "
-                "its contents (QLabel.scaledContents), and QScrollArea's "
-                "ability to automatically resize its contents "
-                "(QScrollArea.widgetResizable), can be used to implement "
-                "zooming and scaling features.</p>"
-                "<p>In addition the example shows how to use QPainter to "
-                "print an image.</p>")
+        QtGui.QMessageBox.about(self, "About HDR Simulator")
 
-    def selectRender(self):
+    def selectRender(self,i):
         
-        QtGui.QDialog()
-        subWindow = inspect.getmembers(selector)
-        subWindow.setFixedSize(200,100)
-        #area.addSubWindow(subWindow)
-        self.setWindowTitle("Set Parameters")
-        #self.setCentralWidget(area)
-        self.show()
-        
+        Dialog = QtGui.QDialog()
+        u = selector.AlgorithmSelector(i)
+        u.setupUi(Dialog)
+
+        Dialog.exec_()
 
     def createActions(self):
         self.openAct = QtGui.QAction("&Open", self, shortcut="Ctrl+O",

@@ -4,7 +4,7 @@ Created on 31 Dec 2013
 @author: green
 '''
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui, Qt
 import operators
 from trackingslider import TrackingSlider
 import inspect
@@ -12,56 +12,65 @@ import sys
 
 class AlgorithmSelector(QtGui.QDialog):
     """ The top level widget for the Interface Demonstrator application """
-    def __init__(self):
+    def __init__(self, operator):
         super(AlgorithmSelector, self).__init__()
-        self.initUI()
+        self.initUI(operator)
         
-    def  initUI(self):
-        self.widgetList = []               # Widgets in the current control panel
-        self.operatorList = []             # Available operator classes
-
-        opSelect = QtGui.QComboBox(self)
+    def  initUI(self, operator):
+        
+        self.widgetList = []
+        self.operatorList = []
+        
+        hbox = QtGui.QHBoxLayout()
+    
+        self.vboxleft = QtGui.QVBoxLayout(self)
+        self.leftbox = QtGui.QWidget(self)
+        self.vboxleft.setAlignment(QtCore.Qt.AlignTop)
+        vboxright = QtGui.QVBoxLayout()
+        rightbox = QtGui.QWidget()
+        
+        #opSelect = QtGui.QComboBox(self)
         for name, obj in inspect.getmembers(operators):
-            if inspect.isclass(obj):
-                opSelect.addItem(obj().opName())
-                self.operatorList.append(obj)
+          if inspect.isclass(obj):
+        #    opSelect.addItem(obj().opName())
+            self.operatorList.append(obj)
         
         # Initially expect to invoke the first operator in the operators
         # module (probably No Operation).
+        #
         self.theOperator = self.operatorList[0]()
         
         # Call my onNewOp method whenever the selected operator changes
-        opSelect.currentIndexChanged.connect(self.onNewOp)
+        #opSelect.currentIndexChanged.connect(self.onNewOp)
         
-        # Build the left vertical box layout.
-        # First, the operator selection combobox
-        self.addWidget(opSelect)
-        #self.vboxleft.addWidget(opSelect)
-        # Then the control panel. bildWidget will return a single compound widget
-        # containing all the controls the operator desires.
-        controls = self.buildWidget(self.theOperator.getGuiComponents(), self)
-        self.addWidget(controls)
+        self.onNewOp(operator)
+        
+        controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)
+        self.vboxleft.addWidget(controls)
         # Add a button to invoke the operator once all the controls are set
         goButton = QtGui.QPushButton("Try it", self)
         # When the button is clicked, call my onClicked method
         goButton.clicked.connect(self.onClicked)
-        
-        self.addWidget(goButton)
-        #self.leftbox.setLayout(self.vboxleft)
+        self.vboxleft.addWidget(goButton)
+        self.leftbox.setLayout(self.vboxleft)
         
         # Similarly for the right vertical box.
         # The text input and output widgets have to be class members
         # so we can read and update them later.
         self.userInput = QtGui.QLineEdit(self)
         self.outputDisplay = QtGui.QLabel(self)
-        self.addWidget(self.userInput)
-        self.addWidget(self.outputDisplay)
-        #rightbox.setLayout(vboxright)    
+        vboxright.addWidget(self.userInput)
+        vboxright.addWidget(self.outputDisplay)
+        rightbox.setLayout(vboxright)    
         
         # Add the two vertical boxes hbox and adopt this as my layout
-        #hbox.addWidget(self.leftbox)
-        #hbox.addWidget(rightbox)
-        #self.setLayout(hbox)
+        hbox.addWidget(self.leftbox)
+        hbox.addWidget(rightbox)
+        self.setLayout(hbox)
+        
+        self.setWindowTitle('File dialog')
+        self.show()
+        print("Window showed")
     
     def onClicked(self):
         """ Receives a signal whenever the user wants to invoke the operator
@@ -77,8 +86,7 @@ class AlgorithmSelector(QtGui.QDialog):
     
     def onNewOp(self, i):
         
-        win2 = AlgorithmSelector()
-        win2.show()
+        print(self.operatorList)
         """ Receives a signal whenever the user wants to change the operator.
               The current list of widgets in the control panel is cleared, and
               a new one built. The old control panel widget is removed from the
@@ -91,19 +99,10 @@ class AlgorithmSelector(QtGui.QDialog):
           
         # Update the current operator and build a new control panel
         # Insert the resulting widget into the QVBoxLayout to replace the one removed
+        
         self.theOperator = self.operatorList[i]()
         controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)    
         self.vboxleft.insertWidget(1, controls)
-          
-        # Boilerplate to dispose of the control panel widget safely.
-        # If it's a widget, mark it for deletion at a convenient time.
-        # If it's a layout, clear it.
-        # (it should always be a widget, but you can't be too careful)
-        oldWidget = oldItem.widget()
-        if oldWidget is not None:
-            oldWidget.deleteLater()
-        else:
-            self.clearLayout(oldItem.layout())
         
     def buildWidget(self, components, parent=None):
         """ Given a list of components, build a control panel widget with the
