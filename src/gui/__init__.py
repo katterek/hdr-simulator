@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui, QtCore, Qt
 import operators
 import trackingslider
 import inspect
@@ -116,14 +116,27 @@ class ImageViewer(QtGui.QMainWindow):
 
     def selectRender(self,i):
         
+        
         Dialog = QtGui.QDialog()
-        Dialog.ui = selector.AlgorithmSelector(i)
-        Dialog.ui.setupUI()
-        Dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        #u.unitUI(i)
-        Dialog.exec_()
-        result = Dialog.getValues()
+        ui = selector.AlgorithmSelector()
+        ui.setupUI(Dialog, i)
+        Dialog.show()
+        
+        #Dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #if returnCode == QtGui.QDialog.Accepted:
+        #    print("accepted!")
+            
+        if Dialog.exec_():
+            result = ui.onClicked()
+        #result = Dialog.connect(Dialog,QtCore.SIGNAL("functionParaters(PyQt_PyObject)"), self.captureParameters)
+        #else:
+        #    result = "doesn't work:("
+             
+        #result=Dialog.getResult()
         print(result)
+        
+        
+        return result
 
     def createActions(self):
         self.openAct = QtGui.QAction("&Open", self, shortcut="Ctrl+O",

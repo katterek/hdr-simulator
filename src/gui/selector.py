@@ -10,10 +10,9 @@ from trackingslider import TrackingSlider
 import inspect
 import sys
 
-class AlgorithmSelector(QtGui.QDialog):
+class AlgorithmSelector(object):
     """ The top level widget for the Interface Demonstrator application """
-    def __init__(self, operator):
-        super(AlgorithmSelector, self).__init__()
+    def setupUI(self, Dialog, operator):
         #self.initUI(operator)
         
     #def  initUI(self, operator):
@@ -23,8 +22,8 @@ class AlgorithmSelector(QtGui.QDialog):
         
         hbox = QtGui.QHBoxLayout()
     
-        self.vboxleft = QtGui.QVBoxLayout(self)
-        self.leftbox = QtGui.QWidget(self)
+        self.vboxleft = QtGui.QVBoxLayout()
+        self.leftbox = QtGui.QWidget()
         self.vboxleft.setAlignment(QtCore.Qt.AlignTop)
         vboxright = QtGui.QVBoxLayout()
         rightbox = QtGui.QWidget()
@@ -48,35 +47,45 @@ class AlgorithmSelector(QtGui.QDialog):
         
         
         
-        self.goButton = QtGui.QPushButton("Try it", self)
+        #self.goButton = QtGui.QPushButton("Try it", self)
         # When the button is clicked, call my onClicked method
-        self.goButton.clicked.connect(self.onClicked)
+        #self.connect(self.goButton, QtCore.SIGNAL("accepted()"), Dialog.accept, SLOT(GetDialogOutput())
+        #self.connect(self.goButton, QtCore.SIGNAL("done ( int r )"), self.onClicked);
+        #self.result = self.goButton.clicked.connect(self.onClicked)
+        
+        
+        self.acceptButton = QtGui.QPushButton('Accept')
+        self.cancelButton = QtGui.QPushButton('Cancel')
+        
+        self.vboxleft.addWidget(self.acceptButton)
+        self.vboxleft.addWidget(self.cancelButton)
+        
+        self.acceptButton.connect(self.acceptButton, QtCore.SIGNAL("clicked()"), Dialog.accept)
+        #self.result = self.acceptButton.connect(self.onClicked())
+        self.cancelButton.connect(self.cancelButton, QtCore.SIGNAL("clicked()"), Dialog.reject)
+        
+       #self.goButton.clicked.connect(self.accept)
+        #self.goButton.clicked(self.getValues())
         #QObject.connect(self.goButton,SIGNAL("clicked()"),self.close())
-        print(self.result, " Yay!, i can still print the result after I clicked the button close")
 
-        self.vboxleft.addWidget(self.goButton)
         self.leftbox.setLayout(self.vboxleft)
         
         # Similarly for the right vertical box.
         # The text input and output widgets have to be class members
         # so we can read and update them later.
-        self.userInput = QtGui.QLineEdit(self)
-        self.outputDisplay = QtGui.QLabel(self)
-        vboxright.addWidget(self.userInput)
-        vboxright.addWidget(self.outputDisplay)
+        #self.userInput = QtGui.QLineEdit(self)
+        #self.outputDisplay = QtGui.QLabel(self)
+        #vboxright.addWidget(self.userInput)
+        #vboxright.addWidget(self.outputDisplay)
         rightbox.setLayout(vboxright)    
         
         # Add the two vertical boxes hbox and adopt this as my layout
         hbox.addWidget(self.leftbox)
         hbox.addWidget(rightbox)
-        self.setLayout(hbox)
+        Dialog.setLayout(hbox)
         
-        self.setWindowTitle('File dialog')
-        self.show()
+        Dialog.setObjectName("Dialog")
         
-    def getValues(self):
-        print("Wohoo i can get values")
-        return self.result
     
     def onClicked(self):
         """ Receives a signal whenever the user wants to invoke the operator
@@ -87,11 +96,9 @@ class AlgorithmSelector(QtGui.QDialog):
         # returns a list of arguments; the * operator explodes a single list into
         # the required parameters. Display the result of such invocation.
         self.result = self.theOperator.invoke(self.getArgsFromGui())
-        self.emit(SIGNAL("asignal(PyQt_PyObject)"), self.result)
-        self.close()
-        #self.outputDisplay.setText(result)
-        
-        #return result
+        #self.emit(QtCore.SIGNAL("resultSignal(PyQt_PyObject)"), self.result)
+
+        return self.result
     
     def onNewOp(self, i):
         
