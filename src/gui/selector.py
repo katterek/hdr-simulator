@@ -29,20 +29,11 @@ class AlgorithmSelector(QtGui.QDialog):
         vboxright = QtGui.QVBoxLayout()
         rightbox = QtGui.QWidget()
         
-        #opSelect = QtGui.QComboBox(self)
         for name, obj in inspect.getmembers(operators):
-          if inspect.isclass(obj):
-        #    opSelect.addItem(obj().opName())
-            self.operatorList.append(obj)
+            if inspect.isclass(obj):
+                self.operatorList.append(obj)
         
-        # Initially expect to invoke the first operator in the operators
-        # module (probably No Operation).
-        #
         self.theOperator = self.operatorList[0]()
-        
-        # Call my onNewOp method whenever the selected operator changes
-        #opSelect.currentIndexChanged.connect(self.onNewOp)
-        
         self.onNewOp(operator)
         
         controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)
@@ -70,7 +61,6 @@ class AlgorithmSelector(QtGui.QDialog):
         
         self.setWindowTitle('File dialog')
         self.show()
-        print("Window showed")
     
     def onClicked(self):
         """ Receives a signal whenever the user wants to invoke the operator
@@ -86,20 +76,12 @@ class AlgorithmSelector(QtGui.QDialog):
     
     def onNewOp(self, i):
         
-        print(self.operatorList)
         """ Receives a signal whenever the user wants to change the operator.
               The current list of widgets in the control panel is cleared, and
               a new one built. The old control panel widget is removed from the
               left QVBoxLayout and replaced with the new one. """
-        print "new op: {}".format(i)
         self.widgetList = []
-          
-        # The old control panel is always item 1 (just below the operator combobox)
-        oldItem = self.vboxleft.takeAt(1)
-          
-        # Update the current operator and build a new control panel
-        # Insert the resulting widget into the QVBoxLayout to replace the one removed
-        
+  
         self.theOperator = self.operatorList[i]()
         controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)    
         self.vboxleft.insertWidget(1, controls)

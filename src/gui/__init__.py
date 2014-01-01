@@ -117,8 +117,7 @@ class ImageViewer(QtGui.QMainWindow):
     def selectRender(self,i):
         
         Dialog = QtGui.QDialog()
-        u = selector.AlgorithmSelector(i)
-        u.setupUi(Dialog)
+        selector.AlgorithmSelector(i)
 
         Dialog.exec_()
 
