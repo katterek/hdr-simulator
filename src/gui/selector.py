@@ -4,7 +4,7 @@ Created on 31 Dec 2013
 @author: green
 '''
 
-from PyQt4 import QtCore, QtGui, Qt
+from PyQt4 import QtCore, QtGui
 import operators
 from trackingslider import TrackingSlider
 import inspect
@@ -40,15 +40,21 @@ class AlgorithmSelector(QtGui.QDialog):
         self.vboxleft.addWidget(controls)
         # Add a button to invoke the operator once all the controls are set
         
+        #self.buttonBox = QtGui.QDialogButtonBox(self.leftbox)
+        #self.buttonBox.setGeometry(QtCore.QRect(150, 250, 341, 32))
+        #self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        #self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        #self.buttonBox.setObjectName("buttonBox")
         
         
         
-        
-        goButton = QtGui.QPushButton("Try it", self)
+        self.goButton = QtGui.QPushButton("Try it", self)
         # When the button is clicked, call my onClicked method
-        self.result = goButton.clicked.connect(self.onClicked)
+        self.goButton.clicked.connect(self.onClicked)
+        #QObject.connect(self.goButton,SIGNAL("clicked()"),self.close())
+        print(self.result, " Yay!, i can still print the result after I clicked the button close")
 
-        self.vboxleft.addWidget(goButton)
+        self.vboxleft.addWidget(self.goButton)
         self.leftbox.setLayout(self.vboxleft)
         
         # Similarly for the right vertical box.
@@ -68,7 +74,8 @@ class AlgorithmSelector(QtGui.QDialog):
         self.setWindowTitle('File dialog')
         self.show()
         
-    def getResult(self):
+    def getValues(self):
+        print("Wohoo i can get values")
         return self.result
     
     def onClicked(self):
@@ -78,11 +85,13 @@ class AlgorithmSelector(QtGui.QDialog):
         
         # use the current operator's invoke method. My getArgsFromGui method
         # returns a list of arguments; the * operator explodes a single list into
-        # the required parameters. Display the result of such invokation.
-        result = self.theOperator.invoke(self.getArgsFromGui())
+        # the required parameters. Display the result of such invocation.
+        self.result = self.theOperator.invoke(self.getArgsFromGui())
+        self.emit(SIGNAL("asignal(PyQt_PyObject)"), self.result)
+        self.close()
         #self.outputDisplay.setText(result)
         
-        return result
+        #return result
     
     def onNewOp(self, i):
         
