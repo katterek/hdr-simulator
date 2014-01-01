@@ -117,9 +117,13 @@ class ImageViewer(QtGui.QMainWindow):
     def selectRender(self,i):
         
         Dialog = QtGui.QDialog()
-        selector.AlgorithmSelector(i)
-
+        Dialog.ui = selector.AlgorithmSelector(i)
+        Dialog.ui.setupUI(Dialog)
+        Dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #u.unitUI(i)
         Dialog.exec_()
+        result = Dialog.ui.getresult()
+        print(result)
 
     def createActions(self):
         self.openAct = QtGui.QAction("&Open", self, shortcut="Ctrl+O",

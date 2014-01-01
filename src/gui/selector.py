@@ -14,9 +14,9 @@ class AlgorithmSelector(QtGui.QDialog):
     """ The top level widget for the Interface Demonstrator application """
     def __init__(self, operator):
         super(AlgorithmSelector, self).__init__()
-        self.initUI(operator)
+        #self.initUI(operator)
         
-    def  initUI(self, operator):
+    #def  initUI(self, operator):
         
         self.widgetList = []
         self.operatorList = []
@@ -41,7 +41,7 @@ class AlgorithmSelector(QtGui.QDialog):
         # Add a button to invoke the operator once all the controls are set
         goButton = QtGui.QPushButton("Try it", self)
         # When the button is clicked, call my onClicked method
-        goButton.clicked.connect(self.onClicked)
+        self.result = goButton.clicked.connect(self.onClicked)
         self.vboxleft.addWidget(goButton)
         self.leftbox.setLayout(self.vboxleft)
         
@@ -61,6 +61,9 @@ class AlgorithmSelector(QtGui.QDialog):
         
         self.setWindowTitle('File dialog')
         self.show()
+        
+    def getResult(self):
+        return self.result
     
     def onClicked(self):
         """ Receives a signal whenever the user wants to invoke the operator
@@ -72,7 +75,8 @@ class AlgorithmSelector(QtGui.QDialog):
         # the required parameters. Display the result of such invokation.
         result = self.theOperator.invoke(self.userInput.text(),
                                          *self.getArgsFromGui())
-        self.outputDisplay.setText(result)
+        #self.outputDisplay.setText(result)
+        return result
     
     def onNewOp(self, i):
         
