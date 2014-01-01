@@ -35,19 +35,24 @@ class ToneRepOperator(Operator):
     def opName(self):
         return 'Tone Reproduction'
     def getGuiComponents(self):
-        return [ [Operator.Checkbox, 'Repeat'], [Operator.Slider, 'Key:', 0, 1],
-             [Operator.Slider, 'White:', 1, 6],[Operator.Slider, 'Gamma:', 1, 6],
-             [Operator.Slider, 'Phi:', 1, 6],[Operator.Slider, 'Threshold:', 1, 6],
-             [Operator.Slider, 'Num:', 1, 6],[Operator.Slider, 'Low:', 1, 6],
-             [Operator.Slider, 'High:', 1, 6],[Operator.Slider, 'Range S:', 1, 10]]
+        return [ [Operator.Slider, 'Key:', 0, 1],[Operator.Slider, 'White:', 1, 6],
+                [Operator.Slider, 'Gamma:', 1, 6],[Operator.Slider, 'Phi:', 1, 6],
+                [Operator.Slider, 'Threshold:', 1, 6],[Operator.Slider, 'Num:', 1, 6],
+                [Operator.Slider, 'Low:', 1, 6],[Operator.Slider, 'High:', 1, 6],
+             [Operator.Slider, 'Range S:', 1, 10]]
         
     
-    def invoke(self, val, rep):
-        print rep
-        result = val
-        if rep:
-            result += ", " + result
-        return result
+    def invoke(self, val):
+        key=val[0]
+        white=val[1]
+        gamma=val[2] 
+        phi=val[3]
+        threshold=val[4]
+        num=val[5]
+        low=val[6]
+        high=val[7]
+        srange=val[8]
+        return key, white, gamma, phi, threshold, num, low, high, srange
 
 
 class Shape(Operator):
@@ -58,19 +63,12 @@ class Shape(Operator):
         return 'Pretty Shape'
     
     def getGuiComponents(self):
-        return [ [Operator.Checkbox, 'Make Square'],
-             [Operator.Slider, 'Size:', 1, 6] ]
+        return [[Operator.Slider, 'Size:', 1, 6] ]
              
-    def invoke(self, val, isSquare, size):
-        result = ''
-        size = int(size)
-        for i in range(size):
-            if isSquare:
-                result += size*'#'
-            else:
-                result += (i+1)*'#'
-                result += '<br/>'
-        return result
+    def invoke(self, values):
+        val1 = values[0]
+        val2 = values[1]
+        return val1, val2
 
 
 class Truncate(Operator):
@@ -82,9 +80,7 @@ class Truncate(Operator):
         return [ [Operator.Checkbox, 'Delete from end'],
              [Operator.Slider, 'Characters to omit:', 1, 10] ]
         
-    def invoke(self, val, fromEnd, numChar):
-        numChar = int(numChar)
-        if fromEnd:
-            return val[:-numChar]
-        else:
-            return val[numChar:]
+    def invoke(self,values):
+        val1 = values[0]
+        val2 = values[1]
+        return val1, val2

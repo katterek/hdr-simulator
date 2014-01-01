@@ -39,9 +39,15 @@ class AlgorithmSelector(QtGui.QDialog):
         controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)
         self.vboxleft.addWidget(controls)
         # Add a button to invoke the operator once all the controls are set
+        
+        
+        
+        
+        
         goButton = QtGui.QPushButton("Try it", self)
         # When the button is clicked, call my onClicked method
         self.result = goButton.clicked.connect(self.onClicked)
+
         self.vboxleft.addWidget(goButton)
         self.leftbox.setLayout(self.vboxleft)
         
@@ -68,14 +74,14 @@ class AlgorithmSelector(QtGui.QDialog):
     def onClicked(self):
         """ Receives a signal whenever the user wants to invoke the operator
             The input text is passed to the operator's invoke function followed
-            by the other parameters it needs. See also getArgsFromGui() """
+            by the other parameters it needs. See also() """
         
         # use the current operator's invoke method. My getArgsFromGui method
         # returns a list of arguments; the * operator explodes a single list into
         # the required parameters. Display the result of such invokation.
-        result = self.theOperator.invoke(self.userInput.text(),
-                                         *self.getArgsFromGui())
+        result = self.theOperator.invoke(self.getArgsFromGui())
         #self.outputDisplay.setText(result)
+        
         return result
     
     def onNewOp(self, i):

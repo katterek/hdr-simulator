@@ -118,11 +118,10 @@ class ImageViewer(QtGui.QMainWindow):
         
         Dialog = QtGui.QDialog()
         Dialog.ui = selector.AlgorithmSelector(i)
-        Dialog.ui.setupUI(Dialog)
+        Dialog.ui.setupUI()
         Dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         #u.unitUI(i)
-        Dialog.exec_()
-        result = Dialog.ui.getresult()
+        result=Dialog.exec_()
         print(result)
 
     def createActions(self):
