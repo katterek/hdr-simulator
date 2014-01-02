@@ -13,10 +13,8 @@ import sys
 class AlgorithmSelector(object):
     """ The top level widget for the Interface Demonstrator application """
     def setupUI(self, Dialog, operator):
-        #self.initUI(operator)
         
-    #def  initUI(self, operator):
-        
+        Dialog.setObjectName("Dialog")
         self.widgetList = []
         self.operatorList = []
         
@@ -25,35 +23,23 @@ class AlgorithmSelector(object):
         self.vboxleft = QtGui.QVBoxLayout()
         self.leftbox = QtGui.QWidget()
         self.vboxleft.setAlignment(QtCore.Qt.AlignTop)
-        vboxright = QtGui.QVBoxLayout()
-        rightbox = QtGui.QWidget()
+        self.vboxright = QtGui.QVBoxLayout()
+        self.rightbox = QtGui.QWidget()
         
+        #retrieving available operator
         for name, obj in inspect.getmembers(operators):
             if inspect.isclass(obj):
                 self.operatorList.append(obj)
         
         self.theOperator = self.operatorList[0]()
+        
+        #custom parameter box constructed depending on the index passed
         self.onNewOp(operator)
         
-        controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)
-        self.vboxleft.addWidget(controls)
-        # Add a button to invoke the operator once all the controls are set
+        self.controls = self.buildWidget(self.theOperator.getGuiComponents(), self.leftbox)
+        self.vboxleft.addWidget(self.controls)     
         
-        #self.buttonBox = QtGui.QDialogButtonBox(self.leftbox)
-        #self.buttonBox.setGeometry(QtCore.QRect(150, 250, 341, 32))
-        #self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        #self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
-        #self.buttonBox.setObjectName("buttonBox")
-        
-        
-        
-        #self.goButton = QtGui.QPushButton("Try it", self)
-        # When the button is clicked, call my onClicked method
-        #self.connect(self.goButton, QtCore.SIGNAL("accepted()"), Dialog.accept, SLOT(GetDialogOutput())
-        #self.connect(self.goButton, QtCore.SIGNAL("done ( int r )"), self.onClicked);
-        #self.result = self.goButton.clicked.connect(self.onClicked)
-        
-        
+        #buttons added and connected
         self.acceptButton = QtGui.QPushButton('Accept')
         self.cancelButton = QtGui.QPushButton('Cancel')
         
@@ -61,42 +47,23 @@ class AlgorithmSelector(object):
         self.vboxleft.addWidget(self.cancelButton)
         
         self.acceptButton.connect(self.acceptButton, QtCore.SIGNAL("clicked()"), Dialog.accept)
-        #self.result = self.acceptButton.connect(self.onClicked())
         self.cancelButton.connect(self.cancelButton, QtCore.SIGNAL("clicked()"), Dialog.reject)
         
-       #self.goButton.clicked.connect(self.accept)
-        #self.goButton.clicked(self.getValues())
-        #QObject.connect(self.goButton,SIGNAL("clicked()"),self.close())
-
+        #setting up layouts
         self.leftbox.setLayout(self.vboxleft)
+        self.rightbox.setLayout(self.vboxright)    
         
-        # Similarly for the right vertical box.
-        # The text input and output widgets have to be class members
-        # so we can read and update them later.
-        #self.userInput = QtGui.QLineEdit(self)
-        #self.outputDisplay = QtGui.QLabel(self)
-        #vboxright.addWidget(self.userInput)
-        #vboxright.addWidget(self.outputDisplay)
-        rightbox.setLayout(vboxright)    
-        
-        # Add the two vertical boxes hbox and adopt this as my layout
         hbox.addWidget(self.leftbox)
-        hbox.addWidget(rightbox)
+        hbox.addWidget(self.rightbox)
         Dialog.setLayout(hbox)
         
-        Dialog.setObjectName("Dialog")
         
-    
-    def onClicked(self):
+    def getParameters(self):
         """ Receives a signal whenever the user wants to invoke the operator
             The input text is passed to the operator's invoke function followed
             by the other parameters it needs. See also() """
         
-        # use the current operator's invoke method. My getArgsFromGui method
-        # returns a list of arguments; the * operator explodes a single list into
-        # the required parameters. Display the result of such invocation.
         self.result = self.theOperator.invoke(self.getArgsFromGui())
-        #self.emit(QtCore.SIGNAL("resultSignal(PyQt_PyObject)"), self.result)
 
         return self.result
     

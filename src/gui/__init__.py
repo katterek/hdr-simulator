@@ -13,7 +13,7 @@ class ImageViewer(QtGui.QMainWindow):
         '''toolbar'''
         self.toolbar = self.addToolBar('Algorithms')
 
-#algorithm selection        
+        #algorithm selection in the toolbar       
         
         opSelect = QtGui.QComboBox(self)
         for name, obj in inspect.getmembers(operators):
@@ -30,7 +30,7 @@ class ImageViewer(QtGui.QMainWindow):
         self.setWindowTitle('Toolbar')    
         self.show()
 
-#display window        
+        #display window        
         self.printer = QtGui.QPrinter()
         self.scaleFactor = 0.0
 
@@ -121,20 +121,9 @@ class ImageViewer(QtGui.QMainWindow):
         ui = selector.AlgorithmSelector()
         ui.setupUI(Dialog, i)
         Dialog.show()
-        
-        #Dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        #if returnCode == QtGui.QDialog.Accepted:
-        #    print("accepted!")
-            
+                    
         if Dialog.exec_():
-            result = ui.onClicked()
-        #result = Dialog.connect(Dialog,QtCore.SIGNAL("functionParaters(PyQt_PyObject)"), self.captureParameters)
-        #else:
-        #    result = "doesn't work:("
-             
-        #result=Dialog.getResult()
-        print(result)
-        
+            result = ui.getParameters()
         
         return result
 
