@@ -11,11 +11,8 @@ except: pylab_loaded = 0
 class HDR:
 
     def __init__(self, srcDir):
-        '''loads all images of imgFormat from imgFolder and
-        resizes by a factor resize'''
-    
+
         pathFolder = srcDir
-        #pathFolder = srcDir.lower();
         '''checking if the format is accepted
         accepted formats: PPM (extentions: ppm, pgm, pbm, pnm'''
 
@@ -31,7 +28,6 @@ class HDR:
                     print 'Wrong format'
 
         self.srcDir = srcDir
-        #self.srcDir = os.path.abspath(srcDir)
         self.image = self.getImage(self.srcDir)
         self.pixels = self.image.load()
         self.width = self.image.size[0]

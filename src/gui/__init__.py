@@ -5,6 +5,7 @@ import inspect
 import sys
 import selector
 import hdr
+import tonereproduction
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -74,8 +75,8 @@ class ImageViewer(QtGui.QMainWindow):
 #                self.imageLabel.adjustSize()
 
 ##TO-DO:load the open file creating a HDR object from the given path
-            path = str(fileName)
-            self.hdrImage = hdr.HDR(path)
+            self.imagePath = str(fileName)
+            #self.hdrImage = hdr.HDR(path)
             print "HDR object created"
 
 
@@ -119,15 +120,24 @@ class ImageViewer(QtGui.QMainWindow):
         
     def executeRender(self,i,result):
         if (i==0):
-            x=0        
+            image=result        
         elif(i==1):
-            x=1
+            image=result
         elif(i==2):
-            self.hdrImage.Tone
+            key=result[0]
+            white=result[1]
+            gamma=result[2]
+            threshold=result[3]
+            phi=result[4]
+            num=result[5]
+            low=result[6]
+            high=result[7]
+            srange=result[8]
+            image = tonereproduction.ToneReproduction(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange)
         else:
-            x=3
+            image=result
         
-        print(x)
+        print(image)
 
     def selectRender(self,i):
         
