@@ -4,6 +4,8 @@ import trackingslider
 import inspect
 import sys
 import selector
+import hdr
+
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
         super(ImageViewer, self).__init__()
@@ -72,8 +74,9 @@ class ImageViewer(QtGui.QMainWindow):
 #                self.imageLabel.adjustSize()
 
 ##TO-DO:load the open file creating a HDR object from the given path
-#        hdrImage = HDR(None, '.jpeg', fileName)
-#        print "HDR object created"
+            path = str(fileName)
+            self.hdrImage = hdr.HDR(path)
+            print "HDR object created"
 
 
 
@@ -113,9 +116,20 @@ class ImageViewer(QtGui.QMainWindow):
 
     def about(self):
         QtGui.QMessageBox.about(self, "About HDR Simulator")
+        
+    def executeRender(self,i,result):
+        if (i==0):
+            x=0        
+        elif(i==1):
+            x=1
+        elif(i==2):
+            self.hdrImage.Tone
+        else:
+            x=3
+        
+        print(x)
 
     def selectRender(self,i):
-        
         
         Dialog = QtGui.QDialog()
         ui = selector.AlgorithmSelector()
@@ -125,8 +139,8 @@ class ImageViewer(QtGui.QMainWindow):
         if Dialog.exec_():
             result = ui.getParameters()
         
-        return result
-
+        self.executeRender(i,result)
+        
     def createActions(self):
         self.openAct = QtGui.QAction("&Open", self, shortcut="Ctrl+O",
                 triggered=self.open)
