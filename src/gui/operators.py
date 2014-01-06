@@ -39,7 +39,7 @@ class ToneRepOperator(Operator):
                 [Operator.Slider, 'Gamma:', 1, 6],[Operator.Slider, 'Phi:', 1, 6],
                 [Operator.Slider, 'Threshold:', 1, 6],[Operator.Slider, 'Num:', 1, 6],
                 [Operator.Slider, 'Low:', 1, 6],[Operator.Slider, 'High:', 1, 6],
-             [Operator.Slider, 'Range S:', 1, 10]]
+             [Operator.Slider, 'Range S:', 1, 10], [Operator.Checkbox, 'Use Default Values']]
         
     
     def invoke(self, val):
@@ -52,7 +52,8 @@ class ToneRepOperator(Operator):
         low=val[6]
         high=val[7]
         srange=val[8]
-        return key, white, gamma, phi, threshold, num, low, high, srange
+        default = val[9]
+        return key, white, gamma, phi, threshold, num, low, high, srange, default
 
 
 class Shape(Operator):

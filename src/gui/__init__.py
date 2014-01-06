@@ -16,7 +16,7 @@ class ImageViewer(QtGui.QMainWindow):
         '''toolbar'''
         self.toolbar = self.addToolBar('Algorithms')
 
-        #algorithm selection in the toolbar       
+        '''lgorithm selection in the toolbar'''       
         
         opSelect = QtGui.QComboBox(self)
         for name, obj in inspect.getmembers(operators):
@@ -33,7 +33,7 @@ class ImageViewer(QtGui.QMainWindow):
         self.setWindowTitle('Toolbar')    
         self.show()
 
-        #display window        
+        '''display window'''        
         self.printer = QtGui.QPrinter()
         self.scaleFactor = 0.0
 
@@ -54,8 +54,8 @@ class ImageViewer(QtGui.QMainWindow):
         self.setWindowTitle("HDR Compare")
         self.resize(500, 400)       
 
-#open file
     def open(self):
+        '''open file'''
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open File", QtCore.QDir.currentPath())
         if fileName:
             image = QtGui.QImage(fileName)
@@ -74,15 +74,10 @@ class ImageViewer(QtGui.QMainWindow):
             self.imagePath = str(fileName)
             print "HDR object created"
 
-
-
     def save(self):
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save File",QtCore.QDir.currentPath())
         hdr.HDR(str(self.tempFile)).saveImage(str(fileName))
-        
-        
-##TO-DO:execute save file from HDR class
-##TO-DO:display window "FILE SAVED"
+        ##TO-DO:display window "FILE SAVED"
 
     def print_(self):
         dialog = QtGui.QPrintDialog(self.printer, self)
@@ -131,13 +126,14 @@ class ImageViewer(QtGui.QMainWindow):
             low=result[6]
             high=result[7]
             srange=result[8]
-            image = tonereproduction.ToneReproduction(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange)
+            default=result[9]
+            image = tonereproduction.ToneReproduction(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange, default)
             hdrImage = image.transform()
         else:
             image=result
         
         
-        #display updated hdrImage
+        '''display updated hdrImage'''
         self.tempFile = QtCore.QString(hdrImage.saveTemp())
         if self.tempFile:
             image = QtGui.QImage(self.tempFile)
@@ -162,7 +158,6 @@ class ImageViewer(QtGui.QMainWindow):
                     
         if Dialog.exec_():
             result = ui.getParameters()
-        
         self.loadParameters(i,result)
         
     def createActions(self):

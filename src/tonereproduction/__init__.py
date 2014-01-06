@@ -12,9 +12,8 @@ except: pylab_loaded = 0
 
 class ToneReproduction(hdr.HDR):
 
-    def __init__(self, srcDir, key, white, gamma, threshold, phi, num, low, high, srange):
-        
-        
+    def __init__(self, srcDir, key, white, gamma, threshold, phi, num, low, high, srange, default):
+              
         pathFolder = srcDir
         '''checking if the format is accepted
         accepted formats: PPM (extentions: ppm, pgm, pbm, pnm'''
@@ -35,22 +34,32 @@ class ToneReproduction(hdr.HDR):
         self.pixels = self.image.load()
         self.width = self.image.size[0]
         self.height = self.image.size[1]
-
-        self.key = key                       #key parameter 0.18 default
-        self.white = white                   #
-        self.gamma = gamma                   #gamma correction 1.6 default
-        self.threshold = threshold           #threshold 0.05 default
-        self.phi = phi                       #
-        self.num = num                       #
-        self.low = low                       #
-        self.high = high                     #
-        #self.width = self.hdrImage.width     #
-        #self.height = self.hdrImage.height   #
-        #self.luminance = self.getLuminanceFromRGB()
-        self.srange = srange
-        
     
-    def logAvLum(self):
+        if default:
+            self.setDefault()
+        else:     
+            self.key = key                       #key parameter 0.18 default'''
+            self.white = white                   #''''''
+            self.gamma = gamma                   #'''gamma correction 1.6 default'''
+            self.threshold = threshold           #'''threshold 0.05 default'''
+            self.phi = phi                       #
+            self.num = num                       #
+            self.low = low                       #
+            self.high = high                     #
+            self.srange = srange
+        
+    def setDefault(self):
+        '''sets default values'''
+        self.key       = 0.18
+        self.white     = 1e20                    #(i.e. use eq 3 instead of 4)
+        self.gamma     = 1.6
+        self.threshold = 0.05
+        self.phi       = 8.0
+        self.num       = 8
+        self.low       = 1
+        self.high      = 43
+        
+    def getlogAvLum(self):
 
         '''Log - average luminance (approximate luminance of the scene,
             used to tdetermine the key of the scene'''
@@ -66,7 +75,7 @@ class ToneReproduction(hdr.HDR):
         
         return logAvLum   
 
-    def scaledLuminance(self, logAvLum):
+    def getScaledLuminance(self, logAvLum):
         
         luminance = self.getLuminanceFromRGB()        
         scaledLuminance = numpy.zeros(shape=(self.width, self.height))
@@ -86,7 +95,7 @@ class ToneReproduction(hdr.HDR):
 
         return lumBurnout
 
-    def gaussianProfile(self):
+    def getGaussianProfile(self):
         
         Ri= numpy.zeros(shape=(self.width, self.height, self.srange))
         for x in range(0, (self.width - 1)):
@@ -96,7 +105,7 @@ class ToneReproduction(hdr.HDR):
 
         return Ri
 
-    def dynamicRange(self):
+    def getDynamicRange(self):
 
         minval = 1e20;
         maxval = -1e20;
@@ -117,5 +126,7 @@ class ToneReproduction(hdr.HDR):
         scaleFactor = 1/logAvLum
         
     def transform(self):
+        scaledLuminance = self.getScaledLuminance(self.getlogAvLum())
+        gaussianProfile = self.getGaussianProfile()
         print("Transform")
         return self
