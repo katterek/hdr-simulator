@@ -78,6 +78,9 @@ class ImageViewer(QtGui.QMainWindow):
 
     def save(self):
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save File",QtCore.QDir.currentPath())
+        hdr.HDR(str(self.tempFile)).saveImage(str(fileName))
+        
+        
 ##TO-DO:execute save file from HDR class
 ##TO-DO:display window "FILE SAVED"
 
@@ -135,12 +138,12 @@ class ImageViewer(QtGui.QMainWindow):
         
         
         #display updated hdrImage
-        tempFile = QtCore.QString(hdrImage.saveImage())
-        if tempFile:
-            image = QtGui.QImage(tempFile)
+        self.tempFile = QtCore.QString(hdrImage.saveTemp())
+        if self.tempFile:
+            image = QtGui.QImage(self.tempFile)
             if image.isNull():
                 QtGui.QMessageBox.information(self, "Image Viewer",
-                        "Cannot load %s." % tempFile)
+                        "Cannot load %s." % self.tempFile)
                 return
 
             self.imageLabel.setPixmap(QtGui.QPixmap.fromImage(image))

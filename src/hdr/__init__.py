@@ -38,11 +38,15 @@ class HDR:
         image = Image.open(srcDir)
         return image
 
-    def saveImage(self):
-        tempDir = ""
-        self.save(tempDir, format='ppm')
-        return tempDir
-
+    def saveTemp(self):
+        tempDir = os.environ['HDR']
+        tempDir = tempDir + '/hdr'
+        self.image.save(tempDir+'/temp.ppm')
+        return tempDir+'/temp.ppm'
+    
+    def saveImage(self, path):
+        self.image.save(path)
+        
     def getLuminanceFromRGB(self):
 
         luminance = numpy.zeros(shape = (self.width,self.height))

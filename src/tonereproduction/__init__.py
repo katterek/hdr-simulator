@@ -115,3 +115,7 @@ class ToneReproduction(hdr.HDR):
 
         lowTone = self.key/3
         scaleFactor = 1/logAvLum
+        
+    def transform(self):
+        print("Transform")
+        return self
