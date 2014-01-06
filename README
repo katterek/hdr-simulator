@@ -1,7 +1,16 @@
+Requirements
+
+
 1. install python image library
 
 a. linux instructions
 b. windows instructions
 
 
-2. create the path
+2. Set path variables.
+
+a. On Linux
+  HDR="$HOME/HDR/HDRSimulator/src"
+  export HDR
+  
+b. On Windows
