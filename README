@@ -1,9 +1,13 @@
 Requirements
 
 
-1. install python image library
+1. Install Python Image Library and Numpy.
 
 a. linux instructions
+
+  sudo apt-get install python-imaging
+  sudo apt-get install python-numpy
+  
 b. windows instructions
 
 
