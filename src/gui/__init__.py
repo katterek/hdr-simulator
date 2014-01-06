@@ -71,12 +71,7 @@ class ImageViewer(QtGui.QMainWindow):
             self.fitToWindowAct.setEnabled(True)
             self.updateActions()
 
-#            if not self.fitToWindowAct.isChecked():
-#                self.imageLabel.adjustSize()
-
-##TO-DO:load the open file creating a HDR object from the given path
             self.imagePath = str(fileName)
-            #self.hdrImage = hdr.HDR(path)
             print "HDR object created"
 
 
@@ -118,7 +113,7 @@ class ImageViewer(QtGui.QMainWindow):
     def about(self):
         QtGui.QMessageBox.about(self, "About HDR Simulator")
         
-    def executeRender(self,i,result):
+    def loadParameters(self,i,result):
         if (i==0):
             image=result        
         elif(i==1):
@@ -134,10 +129,26 @@ class ImageViewer(QtGui.QMainWindow):
             high=result[7]
             srange=result[8]
             image = tonereproduction.ToneReproduction(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange)
+            hdrImage = image.transform()
         else:
             image=result
         
-        print(image)
+        
+        #display updated hdrImage
+        tempFile = QtCore.QString(hdrImage.saveImage())
+        if tempFile:
+            image = QtGui.QImage(tempFile)
+            if image.isNull():
+                QtGui.QMessageBox.information(self, "Image Viewer",
+                        "Cannot load %s." % tempFile)
+                return
+
+            self.imageLabel.setPixmap(QtGui.QPixmap.fromImage(image))
+            self.scaleFactor = 1.0
+
+            self.printAct.setEnabled(True)
+            self.fitToWindowAct.setEnabled(True)
+            self.updateActions()
 
     def selectRender(self,i):
         
@@ -149,7 +160,7 @@ class ImageViewer(QtGui.QMainWindow):
         if Dialog.exec_():
             result = ui.getParameters()
         
-        self.executeRender(i,result)
+        self.loadParameters(i,result)
         
     def createActions(self):
         self.openAct = QtGui.QAction("&Open", self, shortcut="Ctrl+O",
