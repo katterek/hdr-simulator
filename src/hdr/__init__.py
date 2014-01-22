@@ -32,6 +32,7 @@ class HDR:
         self.pixels = self.image.load()
         self.width = self.image.size[0]
         self.height = self.image.size[1]
+        self.luminance = self.getLuminanceFromRGB()
 
     def getImage(self, srcDir):
 
@@ -57,3 +58,21 @@ class HDR:
                 luminance[x,y] = L
 
         return luminance
+    
+    def checkColorCoordinates(self):
+        colourspace = self.image.getbands()
+        if (colourspace != ('R', 'G', 'B')):
+            print("Colour coordinates of the image should be in RGB colourspace.")
+            return False
+        return True
+    
+    def modifyLuminance(self, newLuminance):
+        
+        for x in range(0, (self.width - 1)):
+            for y in range(0, (self.height - 1)):
+                '''L = 0.27R + 0.67G + 0.2B'''
+                self.pixels[x,y][0] = self.pixels[x,y][0]*(newLuminance[x,y]/self.luminance[x,y])
+                self.pixels[x,y][1] = self.pixels[x,y][1]*(newLuminance[x,y]/self.luminance[x,y])
+                self.pixels[x,y][2] = self.pixels[x,y][2]*(newLuminance[x,y]/self.luminance[x,y])     
+        
+        
