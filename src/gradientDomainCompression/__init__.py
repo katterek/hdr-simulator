@@ -137,7 +137,7 @@ class fattal(hdr.HDR):
     
     def execute(self):
         
-        if (checkColorCoordinates==False):
+        if (self.checkColorCoordinates()==False):
             print("Can't proceed with the algorithm execution, wrong colour coordinates")
             #TO DO: convert to RGB
         else:#DOEVERYTHING

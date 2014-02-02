@@ -1,9 +1,8 @@
 from PIL import Image
 import os, os.path
 import sys, string
-import numpy
+import numpy as np
 import hdr
-import math
 import copy
 try:
     import pylab
@@ -59,6 +58,7 @@ class reinhard(hdr.HDR):
         self.num       = 8
         self.low       = 1
         self.high      = 43
+        self.srange    = 9                      #size of the filter in pixels
         
     def getlogAvLum(self):
 
@@ -70,42 +70,135 @@ class reinhard(hdr.HDR):
         luminance = self.getLuminanceFromRGB()
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
-                sumTot = sumTot + math.log(luminance[x,y]+0.01)
+                sumTot = sumTot + np.log(luminance[x,y]+0.01)
 
-        logAvLum = (1/N)*math.exp(sumTot)
+        logAvLum = np.exp(sumTot/N)
         
-        return logAvLum   
+        return logAvLum
 
     def getScaledLuminance(self, logAvLum):
         
-        luminance = self.getLuminanceFromRGB()        
-        scaledLuminance = numpy.zeros(shape=(self.width, self.height))
+        luminance = self.getLuminanceFromRGB()
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
-                scaledLuminance[x,y] = (self.key/logAvLum)*luminance[x,y]
+                luminance[x,y] = (self.key/logAvLum)*luminance[x,y]
 
-        return scaledLuminance
+        return luminance
 
     def lumBurnout(self, scaledLuminance, convRes1):
         
-        lumBurnout = numpy.zeros(shape=(self.width, self.height))
-        sm = numpy.zeros(shape=(self.width, self.height))
+        lumBurnout = np.zeros(shape=(self.width, self.height))
+        sm = np.zeros(shape=(self.width, self.height))
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
                 lumBurnout[x,y] = scaledLuminance[x,y]/(1+convRes1[x, y, sm[x, y]])
 
         return lumBurnout
 
-    def getGaussianProfile(self):
+    def getGaussianProfile(self, s, alpha):
         
-        Ri= numpy.zeros(shape=(self.width, self.height, self.srange))
+        Ri = np.zeros(shape=(self.width, self.height))
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
-                for s in range(0, (self.srange - 1)):
-                    Ri[x,y,s] = (1/((self.pi*self.alpha*s)^2))*math.exp(-(x^2 +y^2)/((self.alpha*s)^2))
+            #for s in range(0, (self.srange - 1)):
+                Ri[x,y] = 1/(np.power((self.phi*alpha*s),2))*np.exp(-(np.power(x,2) + np.power(y,2))/(np.power((alpha*s),2)))
 
         return Ri
+    
+    def getLocalContrast(self, luminance):
+        
+        alpha1 = 1/(2*np.sqrt(2))
+        alpha2 = alpha1*1.6
+            
+        Vs = np.zeros(shape=(self.srange, self.width, self.height))
+        Vis = np.zeros(shape=(self.srange, self.width, self.height))
+        V1s = np.zeros(shape=(self.width, self.height))
+        V2s = np.zeros(shape=(self.width, self.height))
+        
+        for s in range(0, (self.srange - 1)):
+            Rs1 = self.getGaussianProfile(s, alpha1)
+            #convolution of V = L(x,y,s)
+            Rs1 = np.reshape(Rs1, self.width*self.height)
+            luminance=np.reshape(luminance, self.width*self.height)
+            V1sflat = np.correlate(luminance,Rs1) #center
+            #restructure V1s in 2D
+            x=0
+            y=0
+            for i in range(0, self.width*self.height-1):
+                V1s[x,y] = V1sflat[i]
+                if (x==self.width):
+                    x = 0
+                    y=y+1
+                x=x+1
+            
+            ##'replicate' in MATLAB?
+            Rs2 = self.getGaussianProfile(s, alpha2)
+            Rs2 = np.reshape(Rs2, self.width*self.height)
+            V2sflat = np.correlate(luminance,Rs2) #surround
+            #restructure V1s in 2D
+            x=0
+            y=0
+            for j in range(0, self.width*self.height-1):
+                V2s[x,y] = V2sflat[i]
+                if (x==self.width):
+                    x = 0
+                    y=y+1
+                x=x+1
+                
+            for x in range(0, (self.width - 1)):
+                for y in range(0, (self.height - 1)):
+                    Vs[s,x,y] = (Vs[x,y] - V2s[x,y])/((2^self.phi*self.key)/(s^2) + V1s[x,y])
+                    Vis[s,x,y] = V1s[x,y]
+                        
+        return Vs, Vis
+                        
+                        
+    def getAdaptationImage(self, luminance, V, V1):
+        
+        adaptationLuminance = luminance
+        Vs = np.zeros(shape = (self.width, self.height))
+        V1s = np.zeros(shape = (self.width, self.height))
+        mask1 = np.zeros(shape = (self.width, self.height))
+        mask0 = np.zeros(shape = (self.width, self.height))
+        
+        for s in range(0, (self.srange - 1)):
+            
+            Vs = V[s]
+            V1s = V1[s]
+            
+            '''find indices of v higher than threshold'''
+            for x in range(0, (self.width - 1)):
+                for y in range(0, (self.height - 1)):
+                    if (Vs[x,y]>self.threshold):
+                        '''TO-CHECK:
+                        is it a condition on a single pixel on indx[x,y]
+                        or a condition for the whole s in the range?
+                        in other words do such index higher than threshold
+                        simply needs to exist to transform the masks
+                        or do we actually use it to render the image?'''
+                        '''don't really understand that statement'''
+                        adaptationLuminance[x,y] = V1s[x,y]
+                        '''let's check what that gives otherwise back to 
+                        the reference material'''
+                        
+                '''If the difference between the pixels for given s range for local contrast
+                exceeds the threshold change the value, otherwise keep it'''
+                
+            '''after checking all the values returned modified luminance'''
+            return adaptationLuminance
+        
 
+    def getCompressedRange(self,scaledLuminance, adaptationLuminance):
+        
+        compressedLuminance = np.zeros(shape = (self.width, self.height))
+        
+        for x in range(0, (self.width - 1)):
+                for y in range(0, (self.height - 1)):
+            
+                    compressedLuminance[x,y] = (scaledLuminance[x,y]*(1+scaledLuminance[x,y]/(self.maxLuminance^2))/(1+adaptationLuminance[x,y]))
+        
+        return compressedLuminance
+     
     def getDynamicRange(self):
 
         minval = 1e20;
@@ -127,7 +220,22 @@ class reinhard(hdr.HDR):
         scaleFactor = 1/logAvLum
         
     def transform(self):
-        scaledLuminance = self.getScaledLuminance(self.getlogAvLum())
-        gaussianProfile = self.getGaussianProfile()
-        print("Transform")
-        return self
+        if (self.checkColorCoordinates()==False):
+            print("Can't proceed with the algorithm execution, wrong colour coordinates")
+            #TO DO: convert to RGB
+        else:#DOEVERYTHING
+            
+            '''Logarithmic mean calculation'''
+            logAvLum = self.getlogAvLum()
+            '''Luminance Scaling with Alpha and Average Logarithimic Luminance'''
+            scaledLuminance = self.getScaledLuminance(logAvLum)
+            '''local contrast calculation'''
+            Vs, V1 = self.getLocalContrast(scaledLuminance)
+            adaptationLuminance = self.getAdaptationLuminance(scaledLuminance, Vs, V1)           
+            
+            '''Range compression'''
+            finalLuminance = self.getCompressedRange(scaledLuminance, adaptationLuminance)
+            '''Changing luminance'''
+            self.modifyLuminance(finalLuminance)            
+            print("Transform")
+            return self
