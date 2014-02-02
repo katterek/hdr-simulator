@@ -101,8 +101,14 @@ class reinhard(hdr.HDR):
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
             #for s in range(0, (self.srange - 1)):
-                Ri[x,y] = 1/(np.power((self.phi*alpha*s),2))*np.exp(-(np.power(x,2) + np.power(y,2))/(np.power((alpha*s),2)))
-
+            
+                #print [x,y]
+                #print "1/((self.phi*alpha*s)^2): ", 1/(np.power(np.pi*alpha*s,2))
+                #print "np.exp(-(x^2 + y^2))/((alpha*s)^2): ", np.exp(-(x^2 + y^2))/((alpha*s)^2)
+                a = x - (self.width/2)
+                b = y - (self.height/2)
+                Ri[x,y] = np.exp(-(a^2 + b^2))/(np.power(alpha*s,2))/(np.power(np.pi*alpha*s,2))                     
+        print Ri
         return Ri
     
     def getLocalContrast(self, luminance):
@@ -118,13 +124,17 @@ class reinhard(hdr.HDR):
         for s in range(0, (self.srange - 1)):
             Rs1 = self.getGaussianProfile(s, alpha1)
             #convolution of V = L(x,y,s)
+            #correlation takes only 1d arrays
+            print "Rs1 ", Rs1
             Rs1 = np.reshape(Rs1, self.width*self.height)
             luminance=np.reshape(luminance, self.width*self.height)
             V1sflat = np.correlate(luminance,Rs1) #center
             #restructure V1s in 2D
             x=0
             y=0
+            print "V1sflat", V1sflat
             for i in range(0, self.width*self.height-1):
+                print(x,y,i)
                 V1s[x,y] = V1sflat[i]
                 if (x==self.width):
                     x = 0
