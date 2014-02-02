@@ -5,7 +5,7 @@ import inspect
 import sys
 import selector
 import hdr
-import tonereproduction
+import reinhardPhotoTMO
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -127,7 +127,7 @@ class ImageViewer(QtGui.QMainWindow):
             high=result[7]
             srange=result[8]
             default=result[9]
-            image = tonereproduction.ToneReproduction(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange, default)
+            image = reinhardPhotoTMO.reinhard(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange, default)
             hdrImage = image.transform()
         else:
             image=result

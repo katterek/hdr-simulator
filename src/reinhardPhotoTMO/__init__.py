@@ -68,8 +68,8 @@ class reinhard(hdr.HDR):
         N = self.width * self.height
         sumTot = 0
         luminance = self.getLuminanceFromRGB()
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
                 sumTot = sumTot + np.log(luminance[x,y]+0.01)
 
         logAvLum = np.exp(sumTot/N)
@@ -79,8 +79,8 @@ class reinhard(hdr.HDR):
     def getScaledLuminance(self, logAvLum):
         
         luminance = self.getLuminanceFromRGB()
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
                 luminance[x,y] = (self.key/logAvLum)*luminance[x,y]
 
         return luminance
@@ -89,26 +89,24 @@ class reinhard(hdr.HDR):
         
         lumBurnout = np.zeros(shape=(self.width, self.height))
         sm = np.zeros(shape=(self.width, self.height))
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
                 lumBurnout[x,y] = scaledLuminance[x,y]/(1+convRes1[x, y, sm[x, y]])
 
         return lumBurnout
 
     def getGaussianProfile(self, s, alpha):
         
-        Ri = np.zeros(shape=(self.width, self.height))
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
-            #for s in range(0, (self.srange - 1)):
-            
-                #print [x,y]
-                #print "1/((self.phi*alpha*s)^2): ", 1/(np.power(np.pi*alpha*s,2))
-                #print "np.exp(-(x^2 + y^2))/((alpha*s)^2): ", np.exp(-(x^2 + y^2))/((alpha*s)^2)
-                a = x - (self.width/2)
-                b = y - (self.height/2)
-                Ri[x,y] = np.exp(-(a^2 + b^2))/(np.power(alpha*s,2))/(np.power(np.pi*alpha*s,2))                     
-        print Ri
+        '''creating a mesh of size 2*s*2+1
+        twice the size of s range + 1 for the origin'''
+        xs = np.linspace(-s*2, s*2, s*2*2+1)
+        ys = np.linspace(-s*2, s*2, s*2*2+1)
+        vx, vy = np.meshgrid(xs, ys)
+        
+        Ri = np.zeros(shape=(s*2*2+1, s*2*2+1))
+        for x in range(0, s*2*2+1):
+            for y in range(0, s*2*2+1):
+                Ri[x,y] = np.exp(-(np.power(vx[x,y],2) + np.power(vy[x,y],2)))/(np.power(alpha*s,2))/(np.power(np.pi*alpha*s,2))                     
         return Ri
     
     def getLocalContrast(self, luminance):
@@ -121,19 +119,19 @@ class reinhard(hdr.HDR):
         V1s = np.zeros(shape=(self.width, self.height))
         V2s = np.zeros(shape=(self.width, self.height))
         
-        for s in range(0, (self.srange - 1)):
+        for s in range(1, self.srange+1):
             Rs1 = self.getGaussianProfile(s, alpha1)
             #convolution of V = L(x,y,s)
             #correlation takes only 1d arrays
+            Rs1 = np.reshape(Rs1, (2*2*s+1)^2)
             print "Rs1 ", Rs1
-            Rs1 = np.reshape(Rs1, self.width*self.height)
             luminance=np.reshape(luminance, self.width*self.height)
             V1sflat = np.correlate(luminance,Rs1) #center
             #restructure V1s in 2D
             x=0
             y=0
             print "V1sflat", V1sflat
-            for i in range(0, self.width*self.height-1):
+            for i in range(0, self.width*self.height):
                 print(x,y,i)
                 V1s[x,y] = V1sflat[i]
                 if (x==self.width):
@@ -148,15 +146,15 @@ class reinhard(hdr.HDR):
             #restructure V1s in 2D
             x=0
             y=0
-            for j in range(0, self.width*self.height-1):
+            for j in range(0, self.width*self.height):
                 V2s[x,y] = V2sflat[i]
                 if (x==self.width):
                     x = 0
                     y=y+1
                 x=x+1
                 
-            for x in range(0, (self.width - 1)):
-                for y in range(0, (self.height - 1)):
+            for x in range(0, (self.width)):
+                for y in range(0, (self.height)):
                     Vs[s,x,y] = (Vs[x,y] - V2s[x,y])/((2^self.phi*self.key)/(s^2) + V1s[x,y])
                     Vis[s,x,y] = V1s[x,y]
                         
@@ -171,14 +169,14 @@ class reinhard(hdr.HDR):
         mask1 = np.zeros(shape = (self.width, self.height))
         mask0 = np.zeros(shape = (self.width, self.height))
         
-        for s in range(0, (self.srange - 1)):
+        for s in range(0, (self.srange)):
             
             Vs = V[s]
             V1s = V1[s]
             
             '''find indices of v higher than threshold'''
-            for x in range(0, (self.width - 1)):
-                for y in range(0, (self.height - 1)):
+            for x in range(0, (self.width)):
+                for y in range(0, (self.height)):
                     if (Vs[x,y]>self.threshold):
                         '''TO-CHECK:
                         is it a condition on a single pixel on indx[x,y]
@@ -202,8 +200,8 @@ class reinhard(hdr.HDR):
         
         compressedLuminance = np.zeros(shape = (self.width, self.height))
         
-        for x in range(0, (self.width - 1)):
-                for y in range(0, (self.height - 1)):
+        for x in range(0, (self.width)):
+                for y in range(0, (self.height)):
             
                     compressedLuminance[x,y] = (scaledLuminance[x,y]*(1+scaledLuminance[x,y]/(self.maxLuminance^2))/(1+adaptationLuminance[x,y]))
         
@@ -215,8 +213,8 @@ class reinhard(hdr.HDR):
         maxval = -1e20;
         luminance = self.getLuminanceFromRGB()
 
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
                 if ((luminance[x,y]<minval) & (luminance[x,y]>0.0)):
                     minval = luminance[x,y]
                 if(luminance[x,y]>maxval):
