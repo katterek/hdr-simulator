@@ -1,7 +1,7 @@
 import Image
 import os, os.path
 import sys, string
-import numpy
+import numpy as np
 from copy import copy
 try:
     import pylab
@@ -50,7 +50,7 @@ class HDR:
         
     def getLuminanceFromRGB(self):
 
-        luminance = numpy.zeros(shape = (self.width,self.height))
+        luminance = np.zeros(shape = (self.width,self.height))
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
                 '''L = 0.27R + 0.67G + 0.2B'''
@@ -71,8 +71,12 @@ class HDR:
         for x in range(0, (self.width - 1)):
             for y in range(0, (self.height - 1)):
                 '''L = 0.27R + 0.67G + 0.2B'''
-                self.pixels[x,y][0] = self.pixels[x,y][0]*(newLuminance[x,y]/self.luminance[x,y])
-                self.pixels[x,y][1] = self.pixels[x,y][1]*(newLuminance[x,y]/self.luminance[x,y])
-                self.pixels[x,y][2] = self.pixels[x,y][2]*(newLuminance[x,y]/self.luminance[x,y])     
+                pixel = list(self.pixels[x,y])
+                pixel[0] = int(pixel[0]*(newLuminance[x,y]/self.luminance[x,y]))
+                pixel[1] = int(pixel[1]*(newLuminance[x,y]/self.luminance[x,y]))
+                pixel[2] = int(pixel[2]*(newLuminance[x,y]/self.luminance[x,y]))
+                
+                updatedPixel = tuple(pixel)
+                self.pixels[x,y] = updatedPixel     
         
         

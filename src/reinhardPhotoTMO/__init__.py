@@ -119,43 +119,49 @@ class reinhard(hdr.HDR):
         V1s = np.zeros(shape=(self.width, self.height))
         V2s = np.zeros(shape=(self.width, self.height))
         
-        for s in range(1, self.srange+1):
+        for s in range(1, self.srange):
             Rs1 = self.getGaussianProfile(s, alpha1)
             #convolution of V = L(x,y,s)
             #correlation takes only 1d arrays
-            Rs1 = np.reshape(Rs1, (2*2*s+1)^2)
-            print "Rs1 ", Rs1
+            Rs1 = np.reshape(Rs1, len(Rs1)*len(Rs1[0]))
             luminance=np.reshape(luminance, self.width*self.height)
-            V1sflat = np.correlate(luminance,Rs1) #center
+            V1sflat = np.correlate(luminance,Rs1, "same") #center
             #restructure V1s in 2D
-            x=0
-            y=0
-            print "V1sflat", V1sflat
-            for i in range(0, self.width*self.height):
-                print(x,y,i)
-                V1s[x,y] = V1sflat[i]
-                if (x==self.width):
-                    x = 0
-                    y=y+1
-                x=x+1
+            a=0
+            b=0
+            print "V1sflat length: ", len(V1sflat)
+            print "Image pixels total: ", self.width*self.height 
+            
+            for i in range(0, len(V1sflat)):
+                #print(x,y,i)
+                if (a==self.width):
+                    a = 0
+                    b=b+1
+                V1s[a,b] = V1sflat[i]
+                a=a+1
             
             ##'replicate' in MATLAB?
             Rs2 = self.getGaussianProfile(s, alpha2)
-            Rs2 = np.reshape(Rs2, self.width*self.height)
-            V2sflat = np.correlate(luminance,Rs2) #surround
-            #restructure V1s in 2D
-            x=0
-            y=0
-            for j in range(0, self.width*self.height):
-                V2s[x,y] = V2sflat[i]
-                if (x==self.width):
-                    x = 0
-                    y=y+1
-                x=x+1
-                
+            Rs2 = np.reshape(Rs2, len(Rs2)*len(Rs2[0]))
+            V2sflat = np.correlate(luminance,Rs2, "same") #surround
+            #restructure V2s in 2D
+            a=0
+            b=0
+            
+            print "V2sflat", V1sflat
+            print "V2sflat length: ", len(V2sflat)
+            print "Image pixels total: ", self.width*self.height 
+            
+            for j in range(0, len(V1sflat)):
+                if (a==self.width):
+                    a = 0
+                    b=b+1
+                V2s[a,b] = V2sflat[i]
+                a=a+1
+            
             for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
-                    Vs[s,x,y] = (Vs[x,y] - V2s[x,y])/((2^self.phi*self.key)/(s^2) + V1s[x,y])
+                    Vs[s,x,y] = (V1s[x,y] - V2s[x,y])/((np.power(2,self.phi*self.key))/(s^2) + V1s[x,y])
                     Vis[s,x,y] = V1s[x,y]
                         
         return Vs, Vis
@@ -194,16 +200,15 @@ class reinhard(hdr.HDR):
                 
             '''after checking all the values returned modified luminance'''
             return adaptationLuminance
-        
 
-    def getCompressedRange(self,scaledLuminance, adaptationLuminance):
+    def getCompressedRange(self,scaledLuminance, adaptationLuminance, maxLuminance):
         
         compressedLuminance = np.zeros(shape = (self.width, self.height))
         
         for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
             
-                    compressedLuminance[x,y] = (scaledLuminance[x,y]*(1+scaledLuminance[x,y]/(self.maxLuminance^2))/(1+adaptationLuminance[x,y]))
+                    compressedLuminance[x,y] = (scaledLuminance[x,y]*(1+scaledLuminance[x,y]/np.power(maxLuminance,2))/(1+adaptationLuminance[x,y]))
         
         return compressedLuminance
      
@@ -220,7 +225,7 @@ class reinhard(hdr.HDR):
                 if(luminance[x,y]>maxval):
                     maxval = luminance[x,y]
 
-        return (minval, maxval), (minval/maxval)
+        return minval, maxval, (minval/maxval)
 
     def midtoneScaling(self, logAvLum):
 
@@ -232,17 +237,18 @@ class reinhard(hdr.HDR):
             print("Can't proceed with the algorithm execution, wrong colour coordinates")
             #TO DO: convert to RGB
         else:#DOEVERYTHING
-            
+            '''get dynamic range values'''
+            minval, maxval, dRange = self.getDynamicRange()
             '''Logarithmic mean calculation'''
             logAvLum = self.getlogAvLum()
             '''Luminance Scaling with Alpha and Average Logarithimic Luminance'''
             scaledLuminance = self.getScaledLuminance(logAvLum)
             '''local contrast calculation'''
             Vs, V1 = self.getLocalContrast(scaledLuminance)
-            adaptationLuminance = self.getAdaptationLuminance(scaledLuminance, Vs, V1)           
+            adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, V1)           
             
             '''Range compression'''
-            finalLuminance = self.getCompressedRange(scaledLuminance, adaptationLuminance)
+            finalLuminance = self.getCompressedRange(scaledLuminance, adaptationLuminance, maxval)
             '''Changing luminance'''
             self.modifyLuminance(finalLuminance)            
             print("Transform")
