@@ -42,23 +42,16 @@ class fattal(hdr.HDR):
             self.fBeta = fBeta
     
     def solvePoisson(self, function):
+        
         fshape = function.shape
         n = fshape[0]*fshape[1]
+        '''b vector'''
+        b=np.reshape(function, n,1)
         
-        ##figure out reshape
-        b = - reshape [function, n, 1]
-        flatten = np.zeros(1, n)
-        i = 0
-        for x in range(0, fshape[0]-1):
-            for y in range(0, fshape[1]-1):
-                flatten[i]=function[x,y]
-                i++
-        
-        #Build a matrix
-        fours = np.ones((1,n))
+        '''Build a matrix'''
+        fours = np.ones(1,n)
         for i in range(0,n):
             fours(i)=4*fours(i)
-        
         A = np.spdiags(fours, 0, n, n)
         T = np.ones((n,1))
         O = T
@@ -72,6 +65,24 @@ class fattal(hdr.HDR):
         #get Bvert
         A = A + B + Bvert
         
+        
+        
+        '''
+        %b vector
+b = -reshape(f,r*c,1);
+
+%Build A matrix
+A = spdiags((4+smoothingCost)*ones(n,1),0,n,n);
+T = ones(n,1);
+O = T;
+T(1:r:n) = 0;
+ 
+A = A + B + B';
+
+%Solve Poisson equation: Ax = b
+x = A\b;
+x = x(1:n);
+x = reshape(x, r, c);'''
         #Solve Poisson equation: Ax = b
         x =A/b
         cutoff = np.zeros((1,n))
@@ -83,8 +94,26 @@ class fattal(hdr.HDR):
         return x    
         
     def gaussianPyramid(self, logLuminance):
-        #Computing Gaussian Pyramid + Gradient
-        numPyr  = round(numpy.log2(min([self.width,self.length])))-numpy.log2(32)
+        '''Computing Gaussian Pyramid + Gradient'''
+        '''%Computing Gaussian Pyramid + Gradient
+
+
+kernel = [1,4,6,4,1]'*[1,4,6,4,1];
+kernel = kernel/sum(kernel(:));
+
+%Generation of the pyramid
+G = [[], struct('fx',imfilter(L,kernelX,'same')/2,'fy',imfilter(L,kernelY,'same')/2)];
+G2 = sqrt(G(1).fx.^2+G(1).fy.^2);
+fAlpha = 0.1*mean(G2(:));
+
+imgTmp = L;
+for i=1:numPyr
+    imgTmp=imresize(conv2(imgTmp,kernel,'same'),0.5,'bilinear');
+    Fx = imfilter(imgTmp,kernelX,'same')/(2^(i+1));
+    Fy = imfilter(imgTmp,kernelY,'same')/(2^(i+1));
+    G = [G, struct('fx',Fx/(2^(i+1)),'fy',Fy/(2^(i+1)))];
+end'''
+        numPyr  = round(np.log2(min([self.width,self.length])))-np.log2(32)
         
         Xkernel = [[0, 0, 0],
                    [-1, 0, 1],
@@ -94,8 +123,16 @@ class fattal(hdr.HDR):
                    [0,0,0],
                    [0,-1,0]]
         
-        Xfiltered = np.correlate(logLuminance, Xkernel)
-        Yfiltered = np.correlate(logLuminance, Ykernel)
+        xs = [1,4,6,4,1]
+        ys = [1,4,6,4,1]
+        vx, vy = np.meshgrid(xs, ys)
+        kernel = vx*vy
+        kernel = kernel/np.sum(kernel)
+        
+        '''Generation of the pyramid'''
+
+        fx = np.correlate(logLuminance, Xkernel, "same")
+        fy = np.correlate(logLuminance, Ykernel, "same")
         
         flat = np.zeros(1, self.width*self.height)
         i = 0
@@ -114,16 +151,17 @@ class fattal(hdr.HDR):
         '''Generation of the pyramid'''
         kx=np.matrix([1,4,6,4,1])
         ky=np.matrix([[1],[4],[6],[4],[1]])
+        kernel = np.zeros(shape=(self.width, self.height))
         
         sum = 0
         for x in range(0, 5):
             for y in range(0, 5):
-                kernel[x][y] = kx[x]*ky[y]
-                sum = kernel[x][y] + sum
+                kernel[x,y] = kx[x]*ky[y]
+                sum = kernel[x,y] + sum
                 
         for x in range(0, 5):
             for y in range(0, 5):
-                kernel[x][y] = kernel[x][y]/sum
+                kernel[x,y] = kernel[x,y]/sum
                 
         tempImg = logLuminance
         
@@ -134,30 +172,55 @@ class fattal(hdr.HDR):
                 pyramidGradient = [pyramidGradient, (Fx/(2^(i+1)),Fy/(2^(i+1)))]
 
             #Generate attenuation mask
+            
+            
+            
+    def divGback(self):
+        '''Calculating the divergence with backward differences'''
+        G = struct('fx',G(1).fx.*Phi_kp1,'fy',G(1).fy.*Phi_kp1);
+        Xkernel = [[0, 0, 0],
+                   [-1, 0, 1],
+                   [0, 0, 0]]
+
+        Ykernel = [[0,1,0],
+                   [0,0,0],
+                   [0,-1,0]]
+        dx = imfilter(G(1).fx.*Phi_kp1,kernelX,'same');
+        dy = imfilter(G(1).fy.*Phi_kp1,kernelY,'same');
+        divG = RemoveSpecials(dx+dy);
+
+   
+    def clampImage(self, Ld):
+        
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                if (Ld[x,y]>1):
+                    Ld[x,y]=1
+                elif (Ld[x,y]<0):
+                    Ld[x,y]=0
+        
+        return Ld
     
     def execute(self):
         
-        if (checkColorCoordinates==False):
+        if (self.checkColorCoordinates()==False):
             print("Can't proceed with the algorithm execution, wrong colour coordinates")
             #TO DO: convert to RGB
         else:#DOEVERYTHING
             
             luminanceChannel = self.getLuminanceFromRGB()
-            logLuminance = log(luminanceChannel+1e-6)
+            logLuminance = np.log(luminanceChannel+1e-6)
             
-            #compute Gaussian Pyramid and Gradient
-            #generate the attenuation mask
-            #calculate the divergence with backward differences
-            #solve poisson equation
+            '''compute Gaussian Pyramid and Gradient'''
+            '''generate the attenuation mask'''
+            
+            '''calculate the divergence with backward differences'''
+            
+            '''solve poisson equation'''
             Ld = exp(PoissonSolver(divG));
-            #clamp image
-            for x in range(0, self.width - 1):
-                for y in range(0, self.height - 1):
-                    if (Ld[x,y]>1):
-                        Ld[x,y]=1
-                    elif (Ld[x,y]<0):
-                        Ld[x,y]=0
-            #change luminance (render the image)
+            '''clamp image'''
+            newLuminance = self.clampImage(Ld)
+            '''change luminance (render the image)'''
             self.modifyLuminance(newLuminance)
             self.saveTemp()
 

@@ -33,6 +33,7 @@ class HDR:
         self.width = self.image.size[0]
         self.height = self.image.size[1]
         self.luminance = self.getLuminanceFromRGB()
+        self.log = ""
 
     def getImage(self, srcDir):
 
@@ -47,13 +48,36 @@ class HDR:
     
     def saveImage(self, path):
         self.image.save(path)
+    
+    def convertToFloat(self):
+        
+        floats = []
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                pixel = list(self.pixels[x,y])
+                pixel[0] = float(pixel[0])
+                pixel[1] = float(pixel[1])
+                pixel[2] = float(pixel[2])
+                
+                floatPixel = tuple(pixel)
+                self.pixels[x,y] = floatPixel
+    
+    def appendLog(self, string):
+       
+        self.log = self.log + "\n" + string
+        
+    def saveLog(self):
+        
+        tempDir = os.environ['HDR']
+        text_file = open(tempDir + "/log.txt", "w") 
+        text_file.write(self.log)
         
     def getLuminanceFromRGB(self):
 
         luminance = np.zeros(shape = (self.width,self.height))
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
-                '''L = 0.27R + 0.67G + 0.2B'''
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                '''L = 0.27R + 0.67G + 0.06B'''
                 L=0.27*self.pixels[x,y][0]+0.67*self.pixels[x,y][1]+0.06*self.pixels[x,y][2]
                 luminance[x,y] = L
 
@@ -68,15 +92,28 @@ class HDR:
     
     def modifyLuminance(self, newLuminance):
         
-        for x in range(0, (self.width - 1)):
-            for y in range(0, (self.height - 1)):
+        log = ""
+                
+        for x in range(0, self.width):
+            for y in range(0, self.height):
                 '''L = 0.27R + 0.67G + 0.2B'''
                 pixel = list(self.pixels[x,y])
-                pixel[0] = int(pixel[0]*(newLuminance[x,y]/self.luminance[x,y]))
-                pixel[1] = int(pixel[1]*(newLuminance[x,y]/self.luminance[x,y]))
-                pixel[2] = int(pixel[2]*(newLuminance[x,y]/self.luminance[x,y]))
+                pixel[0] = int(pixel[0]*(newLuminance[x,y]*self.luminance[x,y]))
+                pixel[1] = int(pixel[1]*(newLuminance[x,y]*self.luminance[x,y]))
+                pixel[2] = int(pixel[2]*(newLuminance[x,y]*self.luminance[x,y]))
+                #if(y==self.height/2):
+                #    print "50% complete"
+                #elif(y==self.height/4):
+                #    print "25% complete"
+                #elif(y==3*self.height/4):
+                #    print "75% complete"              
+                
+                
+                log = log + "pixel[0]: " + str(pixel[0]) + " newLuminance[x,y]: " + str(newLuminance[x,y]) + " self.luminance[x,y]: " + str(self.luminance[x,y]) + "\n" +"pixel[1]: " + str(pixel[1]) + " newLuminance[x,y]: " + str(newLuminance[x,y]) + " self.luminance[x,y]: " + str(self.luminance[x,y]) + "\n" + "pixel[2]: " + str(pixel[2]) + " newLuminance[x,y]: " + str(newLuminance[x,y]) + " self.luminance[x,y]: " + str(self.luminance[x,y]) + "\n"
                 
                 updatedPixel = tuple(pixel)
-                self.pixels[x,y] = updatedPixel     
+                self.pixels[x,y] = updatedPixel
+        
+        self.appendLog(log)
         
         

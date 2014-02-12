@@ -34,6 +34,7 @@ class reinhard(hdr.HDR):
         self.width = self.image.size[0]
         self.height = self.image.size[1]
         self.luminance = self.getLuminanceFromRGB()
+        self.log = ""
     
         if default:
             self.setDefault()
@@ -50,7 +51,7 @@ class reinhard(hdr.HDR):
         
     def setDefault(self):
         '''sets default values'''
-        self.key       = 0.18
+        self.key       = 0.36
         self.white     = 1e20                    #(i.e. use eq 3 instead of 4)
         self.gamma     = 1.6
         self.threshold = 0.05
@@ -58,7 +59,7 @@ class reinhard(hdr.HDR):
         self.num       = 8
         self.low       = 1
         self.high      = 43
-        self.srange    = 9                      #size of the filter in pixels
+        self.srange    = 2                      #size of the filter in pixels
         
     def getlogAvLum(self):
 
@@ -73,22 +74,23 @@ class reinhard(hdr.HDR):
                 sumTot = sumTot + np.log(luminance[x,y]+0.01)
 
         logAvLum = np.exp(sumTot/N)
-        
+        self.appendLog("logAvLum: " + str(logAvLum))
         return logAvLum
 
     def getScaledLuminance(self, logAvLum):
         
+        #self.convertToFloat()        
         luminance = self.getLuminanceFromRGB()
         for x in range(0, (self.width)):
             for y in range(0, (self.height)):
                 luminance[x,y] = (self.key/logAvLum)*luminance[x,y]
-
+                self.appendLog("ScaledLuminance["+str(x)+"," +str(y)+ "]: " + str(luminance[x,y]))
         return luminance
 
-    def lumBurnout(self, scaledLuminance, convRes1):
+    def lumBurnout(self, scaledLuminance, convRes1, sm):
         
         lumBurnout = np.zeros(shape=(self.width, self.height))
-        sm = np.zeros(shape=(self.width, self.height))
+        #sm = np.zeros(shape=(self.width, self.height))
         for x in range(0, (self.width)):
             for y in range(0, (self.height)):
                 lumBurnout[x,y] = scaledLuminance[x,y]/(1+convRes1[x, y, sm[x, y]])
@@ -129,9 +131,6 @@ class reinhard(hdr.HDR):
             #restructure V1s in 2D
             a=0
             b=0
-            print "V1sflat length: ", len(V1sflat)
-            print "Image pixels total: ", self.width*self.height 
-            
             for i in range(0, len(V1sflat)):
                 #print(x,y,i)
                 if (a==self.width):
@@ -147,11 +146,7 @@ class reinhard(hdr.HDR):
             #restructure V2s in 2D
             a=0
             b=0
-            
-            print "V2sflat", V1sflat
-            print "V2sflat length: ", len(V2sflat)
-            print "Image pixels total: ", self.width*self.height 
-            
+                        
             for j in range(0, len(V1sflat)):
                 if (a==self.width):
                     a = 0
@@ -161,12 +156,12 @@ class reinhard(hdr.HDR):
             
             for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
+                    self.appendLog("Vs[s,x,y] = ("+ str(V1s[x,y]) + "-" + str(V2s[x,y]) + ")/( "+ str(np.power(2,self.phi*self.key)) +"/(" + str(s^2) + "+" + str(V1s[x,y])+")")
                     Vs[s,x,y] = (V1s[x,y] - V2s[x,y])/((np.power(2,self.phi*self.key))/(s^2) + V1s[x,y])
                     Vis[s,x,y] = V1s[x,y]
                         
         return Vs, Vis
-                        
-                        
+                                              
     def getAdaptationImage(self, luminance, V, V1):
         
         adaptationLuminance = luminance
@@ -183,7 +178,7 @@ class reinhard(hdr.HDR):
             '''find indices of v higher than threshold'''
             for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
-                    if (Vs[x,y]>self.threshold):
+                    if (Vs[x,y]>self.threshold*luminance[x,y]):
                         '''TO-CHECK:
                         is it a condition on a single pixel on indx[x,y]
                         or a condition for the whole s in the range?
@@ -191,7 +186,7 @@ class reinhard(hdr.HDR):
                         simply needs to exist to transform the masks
                         or do we actually use it to render the image?'''
                         '''don't really understand that statement'''
-                        adaptationLuminance[x,y] = V1s[x,y]
+                        adaptationLuminance[x,y] = luminance[x,y]/(1+Vs[x,y])
                         '''let's check what that gives otherwise back to 
                         the reference material'''
                         
@@ -235,21 +230,36 @@ class reinhard(hdr.HDR):
     def transform(self):
         if (self.checkColorCoordinates()==False):
             print("Can't proceed with the algorithm execution, wrong colour coordinates")
+            self.appendLog("Can't proceed with the algorithm execution, wrong colour coordinates")
             #TO DO: convert to RGB
         else:#DOEVERYTHING
             '''get dynamic range values'''
             minval, maxval, dRange = self.getDynamicRange()
             '''Logarithmic mean calculation'''
             logAvLum = self.getlogAvLum()
+            print("Average luminance obtained.")
+            self.appendLog("Average luminance obtained.")
             '''Luminance Scaling with Alpha and Average Logarithimic Luminance'''
             scaledLuminance = self.getScaledLuminance(logAvLum)
+            print("Luminance scaled...")
+            self.appendLog("Luminance scaled...")
             '''local contrast calculation'''
             Vs, V1 = self.getLocalContrast(scaledLuminance)
+            print("Local contrast obtained.")
+            self.appendLog("Local contrast obtained.")
+            print("Calculating adaptation luminance...")
+            self.appendLog("Calculating adaptation luminance...")
             adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, V1)           
-            
             '''Range compression'''
+            print("Range compression.")
+            self.appendLog("Range compression.")
             finalLuminance = self.getCompressedRange(scaledLuminance, adaptationLuminance, maxval)
             '''Changing luminance'''
-            self.modifyLuminance(finalLuminance)            
-            print("Transform")
+            print("Modifying luminance...")
+            self.appendLog("Modifying luminance...")
+            self.modifyLuminance(finalLuminance)
+            #self.modifyLuminance(self.getLuminanceFromRGB())            
+            print("Image Transformed.")
+            self.appendLog("Image Transformed.")
+            self.saveLog()
             return self
