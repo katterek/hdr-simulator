@@ -98,9 +98,9 @@ class HDR:
             for y in range(0, self.height):
                 '''L = 0.27R + 0.67G + 0.2B'''
                 pixel = list(self.pixels[x,y])
-                pixel[0] = int(pixel[0]*(newLuminance[x,y]*self.luminance[x,y]))
-                pixel[1] = int(pixel[1]*(newLuminance[x,y]*self.luminance[x,y]))
-                pixel[2] = int(pixel[2]*(newLuminance[x,y]*self.luminance[x,y]))
+                pixel[0] = int(pixel[0]*(newLuminance[x,y]/self.luminance[x,y]))
+                pixel[1] = int(pixel[1]*(newLuminance[x,y]/self.luminance[x,y]))
+                pixel[2] = int(pixel[2]*(newLuminance[x,y]/self.luminance[x,y]))
                 #if(y==self.height/2):
                 #    print "50% complete"
                 #elif(y==self.height/4):

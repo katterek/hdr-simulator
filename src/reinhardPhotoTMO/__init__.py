@@ -39,7 +39,7 @@ class reinhard(hdr.HDR):
         if default:
             self.setDefault()
         else:     
-            self.key = key                       #key parameter 0.18 default'''
+            self.key = key*0.09                       #key parameter 0.18 default'''
             self.white = white                   #''''''
             self.gamma = gamma                   #'''gamma correction 1.6 default'''
             self.threshold = threshold           #'''threshold 0.05 default'''
@@ -59,7 +59,7 @@ class reinhard(hdr.HDR):
         self.num       = 8
         self.low       = 1
         self.high      = 43
-        self.srange    = 2                      #size of the filter in pixels
+        self.srange    = 6                      #size of the filter in pixels
         
     def getlogAvLum(self):
 
@@ -162,7 +162,7 @@ class reinhard(hdr.HDR):
                         
         return Vs, Vis
                                               
-    def getAdaptationImage(self, luminance, V, V1):
+    def getAdaptationImage(self, luminance, V, V1, maximumLuminance):
         
         adaptationLuminance = luminance
         Vs = np.zeros(shape = (self.width, self.height))
@@ -178,7 +178,7 @@ class reinhard(hdr.HDR):
             '''find indices of v higher than threshold'''
             for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
-                    if (Vs[x,y]>self.threshold*luminance[x,y]):
+                    if (Vs[x,y]<self.threshold*luminance[x,y]):
                         '''TO-CHECK:
                         is it a condition on a single pixel on indx[x,y]
                         or a condition for the whole s in the range?
@@ -186,7 +186,8 @@ class reinhard(hdr.HDR):
                         simply needs to exist to transform the masks
                         or do we actually use it to render the image?'''
                         '''don't really understand that statement'''
-                        adaptationLuminance[x,y] = luminance[x,y]/(1+Vs[x,y])
+                        adaptationLuminance[x,y] = maximumLuminance*luminance[x,y]/(1+Vs[x,y])
+                        self.appendLog("Adaptation Luminance [" + str(x) + "," + str(y) + "]: "+str(adaptationLuminance[x,y]))
                         '''let's check what that gives otherwise back to 
                         the reference material'''
                         
@@ -219,6 +220,7 @@ class reinhard(hdr.HDR):
                     minval = luminance[x,y]
                 if(luminance[x,y]>maxval):
                     maxval = luminance[x,y]
+                    self.appendLog("New MaxValue: " + str(maxval))
 
         return minval, maxval, (minval/maxval)
 
@@ -235,6 +237,8 @@ class reinhard(hdr.HDR):
         else:#DOEVERYTHING
             '''get dynamic range values'''
             minval, maxval, dRange = self.getDynamicRange()
+            print("MaxVal: " + str(maxval)+ "MinVal: "+ str(minval))
+            self.appendLog("MaxVal: " + str(maxval)+ "MinVal: "+ str(minval))
             '''Logarithmic mean calculation'''
             logAvLum = self.getlogAvLum()
             print("Average luminance obtained.")
@@ -249,7 +253,7 @@ class reinhard(hdr.HDR):
             self.appendLog("Local contrast obtained.")
             print("Calculating adaptation luminance...")
             self.appendLog("Calculating adaptation luminance...")
-            adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, V1)           
+            adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, V1, maxval)           
             '''Range compression'''
             print("Range compression.")
             self.appendLog("Range compression.")
@@ -257,7 +261,7 @@ class reinhard(hdr.HDR):
             '''Changing luminance'''
             print("Modifying luminance...")
             self.appendLog("Modifying luminance...")
-            self.modifyLuminance(finalLuminance)
+            self.modifyLuminance(adaptationLuminance)
             #self.modifyLuminance(self.getLuminanceFromRGB())            
             print("Image Transformed.")
             self.appendLog("Image Transformed.")
