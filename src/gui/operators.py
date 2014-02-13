@@ -36,7 +36,7 @@ class ToneRepOperator(Operator):
         return 'Tone Reproduction'
     def getGuiComponents(self):
         return [ [Operator.Slider, 'Key:', 1, 11],[Operator.Slider, 'Gamma:', 0.0, 2.0],
-                [Operator.Slider, 'Phi:', 1, 16],[Operator.Slider, 'Threshold:', 0.01, 1.00], 
+                [Operator.Slider, 'Phi:', 1, 16],[Operator.Slider, 'Threshold:', 0.01, 0.5], 
                 [Operator.Slider, 'Range S:', 1, 10],[Operator.Checkbox, 'Use Default Values']]
         
     

@@ -54,7 +54,7 @@ class reinhard(hdr.HDR):
             '''phi factor'''           
             self.phi = phi
             '''max range of local contrast adjustment'''                      
-            self.srange = srange                 
+            self.srange = int(srange)                 
             
         
     def setDefault(self):
@@ -196,7 +196,7 @@ class reinhard(hdr.HDR):
                         simply needs to exist to transform the masks
                         or do we actually use it to render the image?'''
                         '''don't really understand that statement'''
-                        adaptationLuminance[x,y] = maximumLuminance*luminance[x,y]/(1+V1[x,y])
+                        adaptationLuminance[x,y] = maximumLuminance*luminance[x,y]/(1+Vs[x,y])
                         self.appendLog("Adaptation Luminance [" + str(x) + "," + str(y) + "]: "+str(adaptationLuminance[x,y]))
                         '''let's check what that gives otherwise back to 
                         the reference material'''
