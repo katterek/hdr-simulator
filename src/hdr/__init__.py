@@ -51,7 +51,6 @@ class HDR:
     
     def convertToFloat(self):
         
-        floats = []
         for x in range(0, self.width):
             for y in range(0, self.height):
                 pixel = list(self.pixels[x,y])
@@ -71,6 +70,18 @@ class HDR:
         tempDir = os.environ['HDR']
         text_file = open(tempDir + "/log.txt", "w") 
         text_file.write(self.log)
+        
+    def getHistogram(self):
+        return self.image.histogram()
+    
+    def getLuminanceMode(self, histogram):
+        
+        mode = 0
+        for x in range(0, len(histogram)):
+            if (histogram[x]>mode):
+                mode = x                
+        
+        return mode
         
     def getLuminanceFromRGB(self):
 

@@ -35,25 +35,19 @@ class ToneRepOperator(Operator):
     def opName(self):
         return 'Tone Reproduction'
     def getGuiComponents(self):
-        return [ [Operator.Slider, 'Key:', 0, 1],[Operator.Slider, 'White:', 1, 6],
-                [Operator.Slider, 'Gamma:', 1, 6],[Operator.Slider, 'Phi:', 1, 6],
-                [Operator.Slider, 'Threshold:', 1, 6],[Operator.Slider, 'Num:', 1, 6],
-                [Operator.Slider, 'Low:', 1, 6],[Operator.Slider, 'High:', 1, 6],
-             [Operator.Slider, 'Range S:', 1, 10], [Operator.Checkbox, 'Use Default Values']]
+        return [ [Operator.Slider, 'Key:', 1, 11],[Operator.Slider, 'Gamma:', 0.0, 2.0],
+                [Operator.Slider, 'Phi:', 1, 16],[Operator.Slider, 'Threshold:', 0.01, 1.00], 
+                [Operator.Slider, 'Range S:', 1, 10],[Operator.Checkbox, 'Use Default Values']]
         
     
     def invoke(self, val):
         key=val[0]
-        white=val[1]
-        gamma=val[2] 
-        phi=val[3]
-        threshold=val[4]
-        num=val[5]
-        low=val[6]
-        high=val[7]
-        srange=val[8]
-        default = val[9]
-        return key, white, gamma, phi, threshold, num, low, high, srange, default
+        gamma=val[1] 
+        phi=val[2]
+        threshold=val[3]
+        srange=val[4]
+        default = val[5]
+        return key, gamma, phi, threshold, srange, default
 
 
 class Shape(Operator):

@@ -118,16 +118,12 @@ class ImageViewer(QtGui.QMainWindow):
             image=result
         elif(i==2):
             key=result[0]
-            white=result[1]
-            gamma=result[2]
-            threshold=result[3]
-            phi=result[4]
-            num=result[5]
-            low=result[6]
-            high=result[7]
-            srange=result[8]
-            default=result[9]
-            image = reinhardPhotoTMO.reinhard(self.imagePath, key, white, gamma, threshold, phi, num, low, high, srange, default)
+            gamma=result[1]
+            threshold=result[2]
+            phi=result[3]
+            srange=result[4]
+            default=result[5]
+            image = reinhardPhotoTMO.reinhard(self.imagePath, key, gamma, threshold, phi, srange, default)
             hdrImage = image.transform()
         else:
             image=result
