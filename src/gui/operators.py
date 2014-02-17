@@ -29,11 +29,11 @@ class Operator:
         # Perform the appropriate operation using the given parameters """#
         return 'Unimplemented'
 
-class ToneRepOperator(Operator):
-    """ Provides control over Tone Reproduction parameters """
+class PhotoTMOOperator(Operator):
+    """ Provides control over Phtographic Tone Reproduction parameters """
 
     def opName(self):
-        return 'Tone Reproduction'
+        return 'Photographic Tone Reproduction'
     def getGuiComponents(self):
         return [ [Operator.Slider, 'Key:', 1, 11],[Operator.Slider, 'Gamma:', 0.0, 2.0],
                 [Operator.Slider, 'Phi:', 1, 16],[Operator.Slider, 'Threshold:', 0.01, 0.5], 
@@ -48,7 +48,20 @@ class ToneRepOperator(Operator):
         srange=val[4]
         default = val[5]
         return key, gamma, phi, threshold, srange, default
+    
+class gradientDomainCompression(Operator):
+    """ Provides control over Gradient Domain Compression parameters """
 
+    def opName(self):
+        return 'Gradient Domain Compression'
+    def getGuiComponents(self):
+        return [ [Operator.Slider, 'fBeta:', 1, 11],[Operator.Checkbox, 'Use Default Values']]
+        
+    
+    def invoke(self, val):
+        fBeta=val[0]
+        default = val[1]
+        return fBeta, default
 
 class Shape(Operator):
     """ Draw a triangle or square of a given dimension using # signs

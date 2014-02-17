@@ -6,6 +6,7 @@ import sys
 import selector
 import hdr
 import reinhardPhotoTMO
+import gradientDomainCompression
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -125,6 +126,11 @@ class ImageViewer(QtGui.QMainWindow):
             default=result[5]
             print("Key: "+ str(key) + ", Gamma: "+ str(gamma) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
             image = reinhardPhotoTMO.reinhard(self.imagePath, key, gamma, threshold, phi, srange, default)
+            hdrImage = image.transform()
+        elif(i==4):
+            fBeta=result[0]
+            default=result[1]
+            image = gradientDomainCompression.fattal(self.imagePath, fBeta, default)
             hdrImage = image.transform()
         else:
             image=result
