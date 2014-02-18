@@ -5,6 +5,8 @@ import numpy as np
 import hdr
 import math
 import copy
+from numpy import imresize
+
 try:
     import pylab
     pylab_loaded = 1
@@ -53,55 +55,49 @@ class fattal(hdr.HDR):
                    [0,0,0],
                    [0,-1,0]]
         
-        #logLumFlat = np.reshape(logLuminance, self.width*self.height, 1)
-        #xKFlat = np.reshape(Xkernel,9,1)
-        #yKFlat = np.reshape(Ykernel, 9, 1)
-        #XfilteredFlat = np.correlate(logLuminance, Xkernel, "same")
-       # YfilteredFlat = np.correlate(logLuminance, Ykernel, "same")
+        Xfiltered = self.correlate2d(logLuminance, Xkernel)
+        Yfiltered = self.correlate2d(logLuminance, Ykernel)     
         
         '''Generation of the pyramid'''
-        kx=np.matrix([1,4,6,4,1])
-        ky=np.matrix([[1],[4],[6],[4],[1]])
+        k=[1,4,6,4,1]
         kernel = np.zeros(shape=(5,5))
         
         sum = 0
         for x in range(0, 5):
             for y in range(0, 5):
-                kernel[x][y] = kx[x]*ky[y]
+                kernel[x][y] = k[x]*k[y]
                 sum = kernel[x][y] + sum
                 
         for x in range(0, 5):
             for y in range(0, 5):
                 kernel[x][y] = kernel[x][y]/sum
         
-        pyrGrad1 = np.zeros(shape=(self.width, self.height))
+        pyrGrad1 = np.zeros(shape=(self.width, self.height, 2))
         pyrGrad2 = np.zeros(shape=(self.width, self.height))
         
         for x in range (0, self.width):
             for y in range(0, self.height):
-                pyrGrad1[x][y] = (Xfiltered[x]/2,Yfiltered[y]/2)
+                pyrGrad1[x,y,0] = (Xfiltered[x,y]/2)
+                pyrGrad1[x,y,1] = (Yfiltered[y,y]/2)
                 #NOT ENTIRELY SURE ABOUT THE SECOND PART IF IT'S CORRECT INDEX
                 #should maybe be [0]?
-                pyrGrad2[x][y] = np.sqrt(np.power(pyrGrad1[x][y][0],2)+np.power(pyrGrad1[x][y][1],2))
-                flat[i] = pyrGrad2[x][y]
-                i = i + 1
+                pyrGrad2[x,y] = np.sqrt(np.power(pyrGrad1[x,y,0],2)+np.power(pyrGrad1[x,y,1],2))
         
-        fAlpha = 0.1*np.mean(np.reshape(pyrGrad2, self.width, self.height))
+        fAlpha = 0.1*np.mean(np.reshape(pyrGrad2, self.width*self.height, 1))
         
         tempImg = logLuminance
         
-        for i in range(1,numPyr):
-            tempImg=np.reshape(tempImg, self.width*self.height)
-            resImg = np.convolve(tempImgflat, kernel, "same")
-            tempImg = np.reshape(resImg, self.width, self.height)
-            resImg = np.convolve(tempImg,kernel, "same")
+        for i in range(1,int(numPyr)):
+            resImg = self.convolve2d(tempImg,kernel)
             tempImg=np.imresize(resImg,50,'bilinear', 'L')
-            Fx = np.correlate(tempImg, Xkernel)/(2^(i+1))
-            Fy = np.correlate(tempImg, Ykernel)/(2^(i+1))
+            
+            im3 = im1.resize((width, height), Image.BILINEAR)
+            Fx = self.correlate2d(tempImg, Xkernel)/(2^(i+1))
+            Fy = self.correlate2d(tempImg, Ykernel)/(2^(i+1))
             pyrGrad1 = [pyrGrad1, (Fx/(2^(i+1)),Fy/(2^(i+1)))]
             
-        return numPyr, fAlpha
-
+        return numPyr, fAlpha, pyrGrad1, pyrGrad2
+    
     def FattalPhi(self, gradX, gradY, fAlpha):
         
         imgOut = np.zeros(self.width, self.height)

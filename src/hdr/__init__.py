@@ -3,6 +3,7 @@ import os, os.path
 import sys, string
 import numpy as np
 from copy import copy
+from numpy import imresize
 try:
     import pylab
     pylab_loaded = 1
@@ -126,5 +127,47 @@ class HDR:
                 self.pixels[x,y] = updatedPixel
         
         self.appendLog(log)
+    
+    def convolve2d(self, array1, array2):
         
+        width = np.shape(array1)[0]
+        height = np.shape(array1)[1]
+        
+        fArray1 = np.reshape(array1, width*height, 1)
+        fArray2 = np.reshape(array2, np.shape(array2)[0]*np.shape(array2)[1], 1)
+        fconvolution = np.convolve(fArray1, fArray2, "same")
+        a=0
+        b=0
+
+        convolution = np.zeros(shape=(width, height))               
+        for j in range(0, len(fconvolution)):
+            if (a==width):
+                a = 0
+                b=b+1
+                convolution[a,b] = fconvolution[j]            
+                a=a+1
+                
+        return convolution
+            
+    def correlate2d(self, array1, array2):
+        
+        width = np.shape(array1)[0]
+        height = np.shape(array1)[1]
+        
+        fArray1 = np.reshape(array1, width*height, 1)
+        fArray2 = np.reshape(array2, np.shape(array2)[0]*np.shape(array2)[1], 1)
+        fcorrelation = np.correlate(fArray1, fArray2, "same")
+        a=0
+        b=0
+
+        correlation = np.zeros(shape=(width, height))                  
+        for j in range(0, len(fcorrelation)):
+            if (a==width):
+                a = 0
+                b=b+1
+                correlation[a,b] = fcorrelation[j]            
+                a=a+1
+                
+        return correlation
+            
         
