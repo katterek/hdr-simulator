@@ -1,7 +1,7 @@
 from PIL import Image
 import os, os.path
 import sys, string
-import numpy
+import numpy as np
 import hdr
 import math
 import copy
@@ -12,7 +12,7 @@ except: pylab_loaded = 0
 
 class durandAndDorsey(hdr.HDR):
 
-    def __init__(self, srcDir, key, white, gamma, threshold, phi, num, low, high, srange, default):
+    def __init__(self, srcDir, key, lda, cmax, default):
               
         pathFolder = srcDir
         '''checking if the format is accepted
@@ -38,30 +38,46 @@ class durandAndDorsey(hdr.HDR):
         if default:
             self.setDefault()
         else:     
-            self.key = key                       #key parameter 0.18 default'''
-            self.white = white                   #''''''
-            self.gamma = gamma                   #'''gamma correction 1.6 default'''
-            self.threshold = threshold           #'''threshold 0.05 default'''
-            self.phi = phi                       #
-            self.num = num                       #
-            self.low = low                       #
-            self.high = high                     #
-            self.srange = srange
+            self.lda = lda
+            self.cmax = cmax
         
     def setDefault(self):
         '''sets default values'''
-        self.key       = 0.18
-        self.white     = 1e20                    #(i.e. use eq 3 instead of 4)
-        self.gamma     = 1.6
-        self.threshold = 0.05
-        self.phi       = 8.0
-        self.num       = 8
-        self.low       = 1
-        self.high      = 4
+        self.lda = 80
+        self.cmax = 100
     
     
-    def execute(self):
+    def transform(self):
         #TO-DO:
+        if (self.checkColorCoordinates()==False):
+            print("Can't proceed with the algorithm execution, wrong colour coordinates")
+            #TO DO: convert to RGB
+        else:#DOEVERYTHING
+            
+            lumChan = self.getLuminanceFromRGB()
+            #what is that??
+            col = np.size(img,3);
+
+            #Chroma
+            for i in range(1,col):
+                img(:,:,i) = RemoveSpecials(img(:,:,i)./lumChan)
+
+            #Fine details and base separation
+            [Lbase,Ldetail]=self.BilateralSeparation(lumChan)
+            
+            #tumblin-rushmeier TMO here
+            
+            for i in range(1, col):
+                img(:,:,i)=img(:,:,i).*Lbase;
+
+
+            imgOut = self.TumblinRushmeierTMO(self.img, self.Lda, self.CMax)
+
+            #Adding details back
+            for i in range(1, col)
+                imgOut(:,:,i) = imgOut(:,:,i).*Ldetail
+            
+
             #Edge-preserving filter
             #Edge-preserving as a robust statistical estimation
             #Acceleration!

@@ -92,7 +92,7 @@ class fattal(hdr.HDR):
             tempImg=np.imresize(resImg,50,'bilinear', 'L')
             
             im3 = im1.resize((width, height), Image.BILINEAR)
-            Fx = self.correlate2d(tempImg, Xkernel)/(2^(i+1))
+it            Fx = self.correlate2d(tempImg, Xkernel)/(2^(i+1))
             Fy = self.correlate2d(tempImg, Ykernel)/(2^(i+1))
             pyrGrad1 = [pyrGrad1, (Fx/(2^(i+1)),Fy/(2^(i+1)))]
             
