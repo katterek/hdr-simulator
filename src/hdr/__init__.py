@@ -3,7 +3,7 @@ import os, os.path
 import sys, string
 import numpy as np
 from copy import copy
-from numpy import imresize
+
 try:
     import pylab
     pylab_loaded = 1

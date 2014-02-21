@@ -6,7 +6,7 @@ import sys
 import selector
 import hdr
 import reinhardPhotoTMO
-import gradientDomainCompression
+import realisticImages
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -113,11 +113,7 @@ class ImageViewer(QtGui.QMainWindow):
         QtGui.QMessageBox.about(self, "About HDR Simulator")
         
     def loadParameters(self,i,result):
-        if (i==0):
-            image=result        
-        elif(i==1):
-            image=result
-        elif(i==2):
+        if(i==0):
             key=result[0]
             gamma=result[1]
             phi=result[2]
@@ -127,11 +123,22 @@ class ImageViewer(QtGui.QMainWindow):
             print("Key: "+ str(key) + ", Gamma: "+ str(gamma) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
             image = reinhardPhotoTMO.reinhard(self.imagePath, key, gamma, threshold, phi, srange, default)
             hdrImage = image.transform()
-        elif(i==4):
+        elif(i==1):
             fBeta=result[0]
             default=result[1]
             image = gradientDomainCompression.fattal(self.imagePath, fBeta, default)
             hdrImage = image.transform()
+            
+        elif(i==2):
+            Lda=result[0]
+            LdMax=result[1]
+            CMax=result[2]
+            Lwa=result[3]
+            default=result[4]
+            image = realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, Lwa, default)
+            print "Image created"
+            hdrImage = image.transform()
+            
         else:
             image=result
         

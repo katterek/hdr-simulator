@@ -34,17 +34,61 @@ class tumblinAndRushmeier(hdr.HDR):
         self.pixels = self.image.load()
         self.width = self.image.size[0]
         self.height = self.image.size[1]
+        self.luminance = self.getLuminanceFromRGB()
+        self.log = ""
     
         if default:
             self.setDefault()
-        else:     
-            self.lda = lda
-            self.cmax = cmax
-        
+        else:
+            '''adaptation display luminance in [10,30] cd/m^2'''
+            self.lda = Lda
+            '''maximum display luminance in [80-180] cd/m^2'''
+            self.ldmax = LdMax
+            '''maximum LDR monitor contrast typically between 30 to 100'''
+            self.cmax = CMax
+            '''adaptation world luminance cd/m^2'''
+            self.lwa = Lwa
+
     def setDefault(self):
         '''sets default values'''
-        self.lda = 80
+        self.lda = 20
         self.cmax = 100
+        self.ldmax = 100
+        self.lwa = np.exp(np.mean(np.reshape(np.log(self.luminance+2.3*1e-5), self.width*self.height, 1)))
     
-    
+    def gammaTumRushTMO(self, x):
+        
+        val=2.655
+        if (x<=100):
+            val=1.855+0.4*np.log10(x+2.3*1e-5)
+        return val
+        
     def transform(self):
+        
+        '''Range compression'''
+        gamma_w = self.gammaTumRushTMO(self.lwa)
+        gamma_d = self.gammaTumRushTMO(self.lda)
+        
+        gamma_wd = gamma_w/(1.855+0.4*np.log(self.lda))
+        
+        mLwa = np.zeros(shape=(self.width, self.height))
+        
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
+                mLwa[x,y] = np.power(np.sqrt(self.cmax),(gamma_wd-1))
+        
+        Ld = np.zeros(shape=(self.width, self.height))
+        
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
+                Ld[x,y]= self.lda*mLwa[x,y]*(np.power((self.luminance[x,y]/self.lwa),(gamma_w/gamma_d)))
+
+        finalLuminance = np.zeros(shape=(self.width, self.height))
+        
+        for x in range(0, (self.width)):
+            for y in range(0, (self.height)):
+                finalLuminance[x,y] = 1/Ld[x,y]
+                
+        self.appendLog("Modifying luminance...")
+        self.modifyLuminance(finalLuminance)
+        print("Image Transformed.")

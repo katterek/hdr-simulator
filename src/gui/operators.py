@@ -63,32 +63,21 @@ class gradientDomainCompression(Operator):
         default = val[1]
         return fBeta, default
 
-class Shape(Operator):
-    """ Draw a triangle or square of a given dimension using # signs
-    Ignores the input value """
-    
-    def opName(self):
-        return 'Pretty Shape'
-    
-    def getGuiComponents(self):
-        return [[Operator.Slider, 'Size:', 1, 6] ]
-             
-    def invoke(self, values):
-        val1 = values[0]
-        val2 = values[1]
-        return val1, val2
+class TumblinAndRushmeier(Operator):
+    """ Provides control over Realistic Images Tone Reproduction parameters """
 
-
-class Truncate(Operator):
-    """ Miss out some characters from the beginning or end of the input """
-    
     def opName(self):
-        return 'Truncate'
+        return 'Realistic Images Tone Reproduction'
     def getGuiComponents(self):
-        return [ [Operator.Checkbox, 'Delete from end'],
-             [Operator.Slider, 'Characters to omit:', 1, 10] ]
+        return [[Operator.Slider, 'Lda:', 1, 500],[Operator.Slider, 'LdMax:', 0.0, 1000],
+                [Operator.Slider, 'CMax:', 1, 1000],[Operator.Slider, 'Lwa:', 1, 500], 
+                [Operator.Checkbox, 'Use Default Values']]
         
-    def invoke(self,values):
-        val1 = values[0]
-        val2 = values[1]
-        return val1, val2
+    
+    def invoke(self, val):
+        Lda=val[0]
+        LdMax=val[1]
+        CMax=val[2]
+        Lwa=val[3]
+        default = val[4]
+        return Lda, LdMax, CMax, Lwa, default
