@@ -1,18 +1,11 @@
-from PIL import Image
 import os, os.path
 import sys, string
 import numpy as np
 import hdr
-import math
-import copy
-try:
-    import pylab
-    pylab_loaded = 1
-except: pylab_loaded = 0
 
 class tumblinAndRushmeier(hdr.HDR):
 
-    def __init__(self, srcDir, Lda, LdMax, CMax, Lwa, default):
+    def __init__(self, srcDir, Lda, LdMax, CMax, default):
               
         pathFolder = srcDir
         '''checking if the format is accepted
@@ -39,6 +32,7 @@ class tumblinAndRushmeier(hdr.HDR):
     
         if default:
             self.setDefault()
+            
         else:
             '''adaptation display luminance in [10,30] cd/m^2'''
             self.lda = Lda
@@ -46,15 +40,14 @@ class tumblinAndRushmeier(hdr.HDR):
             self.ldmax = LdMax
             '''maximum LDR monitor contrast typically between 30 to 100'''
             self.cmax = CMax
-            '''adaptation world luminance cd/m^2'''
-            self.lwa = Lwa
+        '''adaptation world luminance cd/m^2'''
+        self.lwa = np.exp(np.mean(np.reshape(np.log(self.luminance+2.3*1e-5), self.width*self.height, 1)))
 
     def setDefault(self):
         '''sets default values'''
         self.lda = 20
         self.cmax = 100
         self.ldmax = 100
-        self.lwa = np.exp(np.mean(np.reshape(np.log(self.luminance+2.3*1e-5), self.width*self.height, 1)))
     
     def gammaTumRushTMO(self, x):
         
@@ -82,13 +75,8 @@ class tumblinAndRushmeier(hdr.HDR):
         for x in range(0, (self.width)):
             for y in range(0, (self.height)):
                 Ld[x,y]= self.lda*mLwa[x,y]*(np.power((self.luminance[x,y]/self.lwa),(gamma_w/gamma_d)))
-
-        finalLuminance = np.zeros(shape=(self.width, self.height))
-        
-        for x in range(0, (self.width)):
-            for y in range(0, (self.height)):
-                finalLuminance[x,y] = 1/Ld[x,y]
                 
         self.appendLog("Modifying luminance...")
-        self.modifyLuminance(finalLuminance)
+        self.modifyLuminance(Ld)
         print("Image Transformed.")
+        return self

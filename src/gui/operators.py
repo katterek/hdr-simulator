@@ -69,8 +69,8 @@ class TumblinAndRushmeier(Operator):
     def opName(self):
         return 'Realistic Images Tone Reproduction'
     def getGuiComponents(self):
-        return [[Operator.Slider, 'Lda:', 1, 500],[Operator.Slider, 'LdMax:', 0.0, 1000],
-                [Operator.Slider, 'CMax:', 1, 1000],[Operator.Slider, 'Lwa:', 1, 500], 
+        return [[Operator.Slider, 'Lda:', 10, 30],[Operator.Slider, 'LdMax:', 30, 100],
+                [Operator.Slider, 'CMax:', 30, 100], 
                 [Operator.Checkbox, 'Use Default Values']]
         
     
@@ -78,6 +78,5 @@ class TumblinAndRushmeier(Operator):
         Lda=val[0]
         LdMax=val[1]
         CMax=val[2]
-        Lwa=val[3]
-        default = val[4]
-        return Lda, LdMax, CMax, Lwa, default
+        default = val[3]
+        return Lda, LdMax, CMax, default

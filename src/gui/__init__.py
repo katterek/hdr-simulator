@@ -5,8 +5,10 @@ import inspect
 import sys
 import selector
 import hdr
-import reinhardPhotoTMO
 import realisticImages
+import reinhardPhotoTMO
+#import FastBilateralFilering #@UnresolvedImport
+#import gradientDomainCompression #@UnresolvedImport
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -17,7 +19,7 @@ class ImageViewer(QtGui.QMainWindow):
         '''toolbar'''
         self.toolbar = self.addToolBar('Algorithms')
 
-        '''lgorithm selection in the toolbar'''       
+        '''algorithm selection in the toolbar'''       
         
         opSelect = QtGui.QComboBox(self)
         for name, obj in inspect.getmembers(operators):
@@ -113,7 +115,7 @@ class ImageViewer(QtGui.QMainWindow):
         QtGui.QMessageBox.about(self, "About HDR Simulator")
         
     def loadParameters(self,i,result):
-        if(i==0):
+        if(i==1):
             key=result[0]
             gamma=result[1]
             phi=result[2]
@@ -123,7 +125,7 @@ class ImageViewer(QtGui.QMainWindow):
             print("Key: "+ str(key) + ", Gamma: "+ str(gamma) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
             image = reinhardPhotoTMO.reinhard(self.imagePath, key, gamma, threshold, phi, srange, default)
             hdrImage = image.transform()
-        elif(i==1):
+        elif(i==0):
             fBeta=result[0]
             default=result[1]
             image = gradientDomainCompression.fattal(self.imagePath, fBeta, default)
@@ -133,15 +135,12 @@ class ImageViewer(QtGui.QMainWindow):
             Lda=result[0]
             LdMax=result[1]
             CMax=result[2]
-            Lwa=result[3]
-            default=result[4]
-            image = realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, Lwa, default)
-            print "Image created"
+            default=result[3]
+            image = realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, default)
             hdrImage = image.transform()
             
         else:
             image=result
-        
         
         '''display updated hdrImage'''
         self.tempFile = QtCore.QString(hdrImage.saveTemp())
