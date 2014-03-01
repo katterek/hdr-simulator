@@ -42,171 +42,192 @@ class durandAndDorsey(hdr.HDR):
         self.cmax = 100
     
     def bilateralFilter(self, data, edge, edgeMin, edgeMax,sigmaSpatial, sigmaRange,samplingSpatial, samplingRange):
-        
-    try:
-        
-    except LowerThan2:
-    if( ndims( data ) > 2 ):
-        error( 'data must be a greyscale image with size [ height, width ]' )
-
-    if( ~isa( data, 'double' ) ),
-        error( 'data must be of class "double"' );
-end
-
-if ~exist( 'edge', 'var' ),
-    edge = data;
-elseif isempty( edge ),
-    edge = data;
-end
-
-if( ndims( edge ) > 2 ),
-    error( 'edge must be a greyscale image with size [ height, width ]' );
-end
-
-if( ~isa( edge, 'double' ) ),
-    error( 'edge must be of class "double"' );
-end
-
-inputHeight = size( data, 1 );
-inputWidth = size( data, 2 );
-
-if ~exist( 'edgeMin', 'var' ),
-    edgeMin = min( edge( : ) );
-    warning( 'edgeMin not set!  Defaulting to: %f\n', edgeMin );
-end
-
-if ~exist( 'edgeMax', 'var' ),
-    edgeMax = max( edge( : ) );
-    warning( 'edgeMax not set!  Defaulting to: %f\n', edgeMax );
-end
-
-edgeDelta = edgeMax - edgeMin;
-
-if ~exist( 'sigmaSpatial', 'var' ),
-    sigmaSpatial = min( inputWidth, inputHeight ) / 16;
-    fprintf( 'Using default sigmaSpatial of: %f\n', sigmaSpatial );
-end
-
-if ~exist( 'sigmaRange', 'var' ),
-    sigmaRange = 0.1 * edgeDelta;
-    fprintf( 'Using default sigmaRange of: %f\n', sigmaRange );
-end
-
-if ~exist( 'samplingSpatial', 'var' ),
-    samplingSpatial = sigmaSpatial;
-end
-
-if ~exist( 'samplingRange', 'var' ),
-    samplingRange = sigmaRange;
-end
-
-if size( data ) ~= size( edge ),
-    error( 'data and edge must be of the same size' );
-end
-
-% parameters
-derivedSigmaSpatial = sigmaSpatial / samplingSpatial;
-derivedSigmaRange = sigmaRange / samplingRange;
-
-paddingXY = floor( 2 * derivedSigmaSpatial ) + 1;
-paddingZ = floor( 2 * derivedSigmaRange ) + 1;
-
-% allocate 3D grid
-downsampledWidth = floor( ( inputWidth - 1 ) / samplingSpatial ) + 1 + 2 * paddingXY;
-downsampledHeight = floor( ( inputHeight - 1 ) / samplingSpatial ) + 1 + 2 * paddingXY;
-downsampledDepth = floor( edgeDelta / samplingRange ) + 1 + 2 * paddingZ;
-
-gridData = zeros( downsampledHeight, downsampledWidth, downsampledDepth );
-gridWeights = zeros( downsampledHeight, downsampledWidth, downsampledDepth );
-
-% compute downsampled indices
-[ jj, ii ] = meshgrid( 0 : inputWidth - 1, 0 : inputHeight - 1 );
-
-% ii =
-% 0 0 0 0 0
-% 1 1 1 1 1
-% 2 2 2 2 2
-
-% jj =
-% 0 1 2 3 4
-% 0 1 2 3 4
-% 0 1 2 3 4
-
-% so when iterating over ii( k ), jj( k )
-% get: ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ... (down columns first)
-
-di = round( ii / samplingSpatial ) + paddingXY + 1;
-dj = round( jj / samplingSpatial ) + paddingXY + 1;
-dz = round( ( edge - edgeMin ) / samplingRange ) + paddingZ + 1;
-
-% perform scatter (there's probably a faster way than this)
-% normally would do downsampledWeights( di, dj, dk ) = 1, but we have to
-% perform a summation to do box downsampling
-for k = 1 : numel( dz ),
-       
-    dataZ = data( k ); % traverses the image column wise, same as di( k )
-    if ~isnan( dataZ  ),
-        
-        dik = di( k );
-        djk = dj( k );
-        dzk = dz( k );
-
-        gridData( dik, djk, dzk ) = gridData( dik, djk, dzk ) + dataZ;
-        gridWeights( dik, djk, dzk ) = gridWeights( dik, djk, dzk ) + 1;
-        
+        '''    
+        try:
+            
+        except LowerThan2:
+            
+        if( ndims( data ) > 2 ):
+            error( 'data must be a greyscale image with size [ height, width ]' )
+    
+        if( ~isa( data, 'double' ) ),
+            error( 'data must be of class "double"' );
     end
-end
-
-% make gaussian kernel
-kernelWidth = 2 * derivedSigmaSpatial + 1;
-kernelHeight = kernelWidth;
-kernelDepth = 2 * derivedSigmaRange + 1;
-
-halfKernelWidth = floor( kernelWidth / 2 );
-halfKernelHeight = floor( kernelHeight / 2 );
-halfKernelDepth = floor( kernelDepth / 2 );
-
-[gridX, gridY, gridZ] = meshgrid( 0 : kernelWidth - 1, 0 : kernelHeight - 1, 0 : kernelDepth - 1 );
-gridX = gridX - halfKernelWidth;
-gridY = gridY - halfKernelHeight;
-gridZ = gridZ - halfKernelDepth;
-gridRSquared = ( gridX .* gridX + gridY .* gridY ) / ( derivedSigmaSpatial * derivedSigmaSpatial ) + ( gridZ .* gridZ ) / ( derivedSigmaRange * derivedSigmaRange );
-kernel = exp( -0.5 * gridRSquared );
-
-% convolve
-blurredGridData = convn( gridData, kernel, 'same' );
-blurredGridWeights = convn( gridWeights, kernel, 'same' );
-
-% divide
-blurredGridWeights( blurredGridWeights == 0 ) = -2; % avoid divide by 0, won't read there anyway
-normalizedBlurredGrid = blurredGridData ./ blurredGridWeights;
-normalizedBlurredGrid( blurredGridWeights < -1 ) = 0; % put 0s where it's undefined
-
-% for debugging
-% blurredGridWeights( blurredGridWeights < -1 ) = 0; % put zeros back
-
-% upsample
-[ jj, ii ] = meshgrid( 0 : inputWidth - 1, 0 : inputHeight - 1 ); % meshgrid does x, then y, so output arguments need to be reversed
-% no rounding
-di = ( ii / samplingSpatial ) + paddingXY + 1;
-dj = ( jj / samplingSpatial ) + paddingXY + 1;
-dz = ( edge - edgeMin ) / samplingRange + paddingZ + 1;
-
-% interpn takes rows, then cols, etc
-% i.e. size(v,1), then size(v,2), ...
-output = interpn( normalizedBlurredGrid, di, dj, dz );
+    
+    if ~exist( 'edge', 'var' ),
+        edge = data;
+    elseif isempty( edge ),
+        edge = data;
+    end
+    
+    if( ndims( edge ) > 2 ),
+        error( 'edge must be a greyscale image with size [ height, width ]' );
+    end
+    
+    if( ~isa( edge, 'double' ) ),
+        error( 'edge must be of class "double"' );
+    end
+    
+    inputHeight = size( data, 1 );
+    inputWidth = size( data, 2 );
+    
+    if ~exist( 'edgeMin', 'var' ),
+        edgeMin = min( edge( : ) );
+        warning( 'edgeMin not set!  Defaulting to: %f\n', edgeMin );
+    end
+    
+    if ~exist( 'edgeMax', 'var' ),
+        edgeMax = max( edge( : ) );
+        warning( 'edgeMax not set!  Defaulting to: %f\n', edgeMax );
+    end
+    
+    edgeDelta = edgeMax - edgeMin;
+    
+    if ~exist( 'sigmaSpatial', 'var' ),
+        sigmaSpatial = min( inputWidth, inputHeight ) / 16;
+        fprintf( 'Using default sigmaSpatial of: %f\n', sigmaSpatial );
+    end
+    
+    if ~exist( 'sigmaRange', 'var' ),
+        sigmaRange = 0.1 * edgeDelta;
+        fprintf( 'Using default sigmaRange of: %f\n', sigmaRange );
+    end
+    
+    if ~exist( 'samplingSpatial', 'var' ),
+        samplingSpatial = sigmaSpatial;
+    end
+    
+    if ~exist( 'samplingRange', 'var' ),
+        samplingRange = sigmaRange;
+    end
+    
+    if size( data ) ~= size( edge ),
+        error( 'data and edge must be of the same size' );
+    end
+    '''
+        '''parameters'''
+        derivedSigmaSpatial = sigmaSpatial / samplingSpatial
+        derivedSigmaRange   = sigmaRange / samplingRange
         
+        for i in range(0, len(derivedSigmaSpatial)):
+            
+            derivedSigmaSpatialFl[i] = np.floor(2*derivedSigmaSpatial[i])+1
+            
+            '''allocate 3D grid'''
+            downsampledWidthp[i]  = np.floor( ( inputWidth - 1 ) / samplingSpatial ) + 1 + 2 * paddingXY[i]
+            downsampledHeight[i]  = np.floor( ( inputHeight - 1 )/ samplingSpatial ) + 1 + 2 * paddingXY[i]
+        
+        
+        for i in range(0, len(derivedSigmaRange)):
+            
+            derivedSigmaRangeFl[i] = np.floor(2*derivedSigmaRange[i]) + 1
+            '''allocate 3D grid'''
+            downsampledDepth[i]  = np.floor( edgeDelta / samplingRange ) + 1 + 2 * paddingZ[i]
+    
+        gridData    = np.zeros( shape = ( downsampledHeight, downsampledWidth, downsampledDepth ))
+        gridWeights = np.zeros( shape = ( downsampledHeight, downsampledWidth, downsampledDepth ))
+    
+        '''compute downsampled indices'''
+        ii=np.linspace(0, inputWidth-1, inputWidth)
+        jj=np.linspace(0, inputHeight-1, inputHeight)
+    
+        jj,ii = np.meshgrid(jj, ii)
+        
+        ''' so when iterating over ii( k ), jj( k )
+        % get: ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ... (down columns first)'''
+        
+        '''?????????''''
+        di = np.round( ii / samplingSpatial ) + paddingXY + 1
+        dj = np.round( jj / samplingSpatial ) + paddingXY + 1
+        dz = np.round( ( edge - edgeMin ) / samplingRange ) + paddingZ + 1;
+    
+        '''perform scatter (there's probably a faster way than this)
+        normally would do downsampledWeights( di, dj, dk ) = 1, but we have to
+        perform a summation to do box downsampling'''
+        for k = 1 : numel( dz ),
+               
+            dataZ = data( k ); 
+            ''' traverses the image column wise, same as di( k )'''
+            if ~isnan( dataZ  ),
+                
+                dik = di( k );
+                djk = dj( k );
+                dzk = dz( k );
+        
+                gridData( dik, djk, dzk ) = gridData( dik, djk, dzk ) + dataZ;
+                gridWeights( dik, djk, dzk ) = gridWeights( dik, djk, dzk ) + 1;
+                
+        
+        '''make gaussian kernel'''
+        kernelWidth  = 2 * derivedSigmaSpatial + 1
+        kernelHeight = kernelWidth
+        kernelDepth  = 2 * derivedSigmaRange + 1
+        
+        halfKernelWidth  = np.floor( kernelWidth / 2 )
+        halfKernelHeight = np.floor( kernelHeight / 2 )
+        halfKernelDepth  = np.floor( kernelDepth / 2 )
+        
+        if (kernelWidth & 0x1):
+            gridX=np.linspace(-halfkernelWidth, halfkernelWidth+1, kernelWidth+1)
+        else:
+            gridX=np.linspace(-halfkernelWidth, halfkernelWidth, kernelWidth+1)
+        if (kernelHeight & 0x1):
+            gridY=np.linspace(-halfkernelWidth, halfkernelHeighth+1, kernelHeight+1)
+        else:
+            gridY=np.linspace(-halfkernelWidth, halfkernelHeighth, kernelHeight+1)
+        if (kernelDepth & 0x1):
+            gridZ=np.linspace(-halfkernelDepth, halfkernelDepth+1, kernelDepth+1)
+        else:
+            gridZ=np.linspace(-halfkernelDepth, halfkernelDepth, kernelDepth+1)
+         
+        gridX, gridY, gridZ = np.meshgrid( gridX, gridY, gridZ)
+        
+        gridRSquared = np.zeros(shape = (kernelDepth + 1, kernelWidth+1, kernelHeight + 1))
+        kernel = gridRSquared
+        
+        '''TO-DO:figure out indices'''
+        for x in range(0, kernelHeight+1):
+            for y in range(0, kernelWidth):
+                for x in range(0, kernelDepth):
+                    gridRSquared[z,x,y] = (np.power(gridX[z,x,y],2) + np.power(gridX[z,x,y],2))/(np.power(derivedSigmaSpatial,2))+(np.power(gridZ[z,x,y],2))/(np.power(derivedSigmaRange,2))
+                    kernel[z,x,y] = np.exp(-0.5 * gridRSquared[z,x,y])
+        
+        '''convolve'''
+        blurredGridData = self.convolve2d( gridData, kernel)
+        blurredGridWeights = self.convolve2d( gridWeights, kernel)
+        
+        '''divide'''
+        blurredGridWeights( blurredGridWeights == 0 ) = -2; # avoid divide by 0, won't read there anyway
+        normalizedBlurredGrid = blurredGridData ./ blurredGridWeights
+        normalizedBlurredGrid( blurredGridWeights < -1 ) = 0 #put 0s where it's undefined
+        
+        '''for debugging'''
+        '''blurredGridWeights( blurredGridWeights < -1 ) = 0; % put zeros back'''
+        
+        '''upsample'''
+        [ jj, ii ] = meshgrid( 0 : inputWidth - 1, 0 : inputHeight - 1 ); % meshgrid does x, then y, so output arguments need to be reversed
+        '''no rounding'''
+        di = ( ii / samplingSpatial ) + paddingXY + 1;
+        dj = ( jj / samplingSpatial ) + paddingXY + 1;
+        dz = ( edge - edgeMin ) / samplingRange + paddingZ + 1;
+        
+        '''interpn takes rows, then cols, etc
+        i.e. size(v,1), then size(v,2), ...'''
+        output = interpn( normalizedBlurredGrid, di, dj, dz );
+                
         return output
     
-    def BilateralSeparation(self,img, simga_s, simga_r):
-        %default parameters
-        if(~exist('sigma_s')|~exist('sigma_r'))
-            sigma_r=4
-            sigma_s=0.5
+    def BilateralSeparation(self,img):
+        
+        '''default parameters'''
+       
+        sigma_r=4
+        sigma_s=0.5
 
         '''Base Layer'''
-        tmp=np.log2(img+1)
-
+        for x in range(0, self.width):
+            for y in range (0, self.height):
+                tmp[x,y] = np.log(img[x,y]+1)
         try
             imgFil = bilateralFilter(tmp,[],min(min(tmp)),max(max(tmp)),sigma_s,sigma_r)
         catch exception
