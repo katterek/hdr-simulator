@@ -1,14 +1,14 @@
 from PyQt4 import QtGui, QtCore, Qt
 import operators
 import trackingslider
-import inspect
 import sys
 import selector
 import hdr
 import realisticImages
 import reinhardPhotoTMO
+import inspect
 #import FastBilateralFilering #@UnresolvedImport
-#import gradientDomainCompression #@UnresolvedImport
+import gradientDomainCompression #@UnresolvedImport
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):

@@ -3,7 +3,6 @@ import os, os.path
 import sys, string
 import numpy as np
 import hdr
-import copy
 try:
     import pylab
     pylab_loaded = 1

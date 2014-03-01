@@ -228,6 +228,8 @@ class durandAndDorsey(hdr.HDR):
         for x in range(0, self.width):
             for y in range (0, self.height):
                 tmp[x,y] = np.log(img[x,y]+1)
+        tmp=np.log2(img+1)
+
         try
             imgFil = bilateralFilter(tmp,[],min(min(tmp)),max(max(tmp)),sigma_s,sigma_r)
         catch exception
