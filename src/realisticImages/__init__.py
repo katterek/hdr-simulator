@@ -5,7 +5,7 @@ import hdr
 
 class tumblinAndRushmeier(hdr.HDR):
 
-    def __init__(self, srcDir, Lda, LdMax, CMax, Lwa, default):
+    def __init__(self, srcDir, Lda, LdMax, CMax, default):
               
         pathFolder = srcDir
         '''checking if the format is accepted

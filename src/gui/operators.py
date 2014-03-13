@@ -35,19 +35,18 @@ class PhotoTMOOperator(Operator):
     def opName(self):
         return 'Photographic Tone Reproduction'
     def getGuiComponents(self):
-        return [ [Operator.Slider, 'Key:', 1, 11],[Operator.Slider, 'Gamma:', 0.0, 2.0],
+        return [ [Operator.Slider, 'Key:', 1, 11],
                 [Operator.Slider, 'Phi:', 1, 16],[Operator.Slider, 'Threshold:', 0.01, 0.5], 
                 [Operator.Slider, 'Range S:', 1, 10],[Operator.Checkbox, 'Use Default Values']]
         
     
     def invoke(self, val):
-        key=val[0]
-        gamma=val[1] 
-        phi=val[2]
-        threshold=val[3]
-        srange=val[4]
-        default = val[5]
-        return key, gamma, phi, threshold, srange, default
+        key=val[0] 
+        phi=val[1]
+        threshold=val[2]
+        srange=val[3]
+        default = val[4]
+        return key, phi, threshold, srange, default
     
 class gradientDomainCompression(Operator):
     """ Provides control over Gradient Domain Compression parameters """

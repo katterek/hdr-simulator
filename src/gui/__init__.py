@@ -117,13 +117,12 @@ class ImageViewer(QtGui.QMainWindow):
     def loadParameters(self,i,result):
         if(i==1):
             key=result[0]
-            gamma=result[1]
-            phi=result[2]
-            threshold=result[3]
-            srange=result[4]
-            default=result[5]
-            print("Key: "+ str(key) + ", Gamma: "+ str(gamma) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
-            image = reinhardPhotoTMO.reinhard(self.imagePath, key, gamma, threshold, phi, srange, default)
+            phi=result[1]
+            threshold=result[2]
+            srange=result[3]
+            default=result[4]
+            print("Key: "+ str(key) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
+            image = reinhardPhotoTMO.reinhard(self.imagePath, key, threshold, phi, srange, default)
             hdrImage = image.transform()
         elif(i==0):
             fBeta=result[0]
@@ -133,6 +132,7 @@ class ImageViewer(QtGui.QMainWindow):
             
         elif(i==2):
             Lda=result[0]
+            Lwa = result
             LdMax=result[1]
             CMax=result[2]
             default=result[3]

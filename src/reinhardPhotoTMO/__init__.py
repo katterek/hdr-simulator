@@ -10,7 +10,7 @@ except: pylab_loaded = 0
 
 class reinhard(hdr.HDR):
 
-    def __init__(self, srcDir, key, gamma, threshold, phi, srange, default):
+    def __init__(self, srcDir, key, threshold, phi, srange, default):
               
         pathFolder = srcDir
         '''checking if the format is accepted
@@ -47,7 +47,7 @@ class reinhard(hdr.HDR):
                 '''key parameter 0.18 default'''     
                 self.key = key*0.09
             '''gamma correction 1.6 default'''             
-            self.gamma = gamma
+            self.gamma = 1.6
             '''threshold 0.05 default'''                   
             self.threshold = threshold
             '''phi factor'''           
@@ -62,7 +62,7 @@ class reinhard(hdr.HDR):
         self.gamma     = 1.6
         self.threshold = 0.05
         self.phi       = 8.0
-        self.srange    = 6                      #size of the filter in pixels
+        self.srange    = 2                      #size of the filter in pixels
     
     def setAutokey(self):
         
@@ -127,8 +127,10 @@ class reinhard(hdr.HDR):
         alpha1 = 1/(2*np.sqrt(2))
         alpha2 = alpha1*1.6
             
-        Vs = np.zeros(shape=(self.srange, self.width, self.height))
-        Vis = np.zeros(shape=(self.srange, self.width, self.height))
+        V = np.zeros(shape=(self.srange, self.width, self.height))
+        Vs = np.zeros(shape=(self.width, self.height))
+        adaptationLuminance = luminance
+        #Vis = np.zeros(shape=(self.srange, self.width, self.height))
         V1s = np.zeros(shape=(self.width, self.height))
         V2s = np.zeros(shape=(self.width, self.height))
         
@@ -137,8 +139,8 @@ class reinhard(hdr.HDR):
             #convolution of V = L(x,y,s)
             #correlation takes only 1d arrays
             Rs1 = np.reshape(Rs1, len(Rs1)*len(Rs1[0]))
-            luminance=np.reshape(luminance, self.width*self.height)
-            V1sflat = np.correlate(luminance,Rs1, "same") #center
+            fLum=np.reshape(luminance, self.width*self.height)
+            V1sflat = np.correlate(fLum,Rs1, "same") #center
             #restructure V1s in 2D
             a=0
             b=0
@@ -153,7 +155,7 @@ class reinhard(hdr.HDR):
             ##'replicate' in MATLAB?
             Rs2 = self.getGaussianProfile(s, alpha2)
             Rs2 = np.reshape(Rs2, len(Rs2)*len(Rs2[0]))
-            V2sflat = np.correlate(luminance,Rs2, "same") #surround
+            V2sflat = np.correlate(fLum,Rs2, "same") #surround
             #restructure V2s in 2D
             a=0
             b=0
@@ -168,13 +170,14 @@ class reinhard(hdr.HDR):
             for x in range(0, (self.width)):
                 for y in range(0, (self.height)):
                     self.appendLog("Vs[s,x,y] = ("+ str(V1s[x,y]) + "-" + str(V2s[x,y]) + ")/( "+ str(np.power(2,self.phi*self.key)) +"/(" + str(s^2) + "+" + str(V1s[x,y])+")")
-                    Vs[s,x,y] = (V1s[x,y] - V2s[x,y])/((np.power(2,self.phi*self.key))/(s^2) + V1s[x,y])
-                    Vis[s,x,y] = V1s[x,y]
-                        
-        return Vs, Vis
-                                              
+                    V[s,x,y] = (V1s[x,y] - V2s[x,y])/((np.power(2,self.phi*self.key))/(s^2) + V1s[x,y])
+                    Vs[x,y] = V[s,x,y]
+                    adaptationLuminance[x,y] = self.getAdaptationImage(luminance[x,y], Vs[x,y], self.maxval)
+        return adaptationLuminance
+    
+    
     def getAdaptationImage(self, luminance, V, V1, maximumLuminance):
-        
+    
         adaptationLuminance = luminance
         Vs = np.zeros(shape = (self.width, self.height))
         #V1s = np.zeros(shape = (self.width, self.height))
@@ -197,14 +200,45 @@ class reinhard(hdr.HDR):
                         '''don't really understand that statement'''
                         adaptationLuminance[x,y] = maximumLuminance*luminance[x,y]/(1+Vs[x,y])
                         self.appendLog("Adaptation Luminance [" + str(x) + "," + str(y) + "]: "+str(adaptationLuminance[x,y]))
-                        '''let's check what that gives otherwise back to 
+                        '''let's check what that gives otherwise back to
                         the reference material'''
                         
                 '''If the difference between the pixels for given s range for local contrast
                 exceeds the threshold change the value, otherwise keep it'''
-                
+                    
             '''after checking all the values returned modified luminance'''
             return adaptationLuminance
+    
+                                              
+    def getAdaptationPixel(self, luminance, V, maximumLuminance):
+        
+        adaptationLuminance = luminance
+        #Vs = np.zeros(shape = (self.width, self.height))
+        #V1s = np.zeros(shape = (self.width, self.height))
+        
+        #for s in range(0, (self.srange)):
+            
+        '''find indices of v higher than threshold'''
+        #for x in range(0, (self.width)):
+            #for y in range(0, (self.height)):
+        if (V<self.threshold*luminance):
+            '''TO-CHECK:
+            is it a condition on a single pixel on indx[x,y]
+            or a condition for the whole s in the range?
+            in other words do such index higher than threshold
+            simply needs to exist to transform the masks
+            or do we actually use it to render the image?'''
+            '''don't really understand that statement'''
+            adaptationLuminance = maximumLuminance*luminance/(1+V)
+            #self.appendLog("Adaptation Luminance [" + str(x) + "," + str(y) + "]: "+str(adaptationLuminance[x,y]))
+            '''let's check what that gives otherwise back to 
+            the reference material'''
+                    
+            '''If the difference between the pixels for given s range for local contrast
+            exceeds the threshold change the value, otherwise keep it'''
+            
+        '''after checking all the values returned modified luminance'''
+        return adaptationLuminance
 
     def getCompressedRange(self,scaledLuminance, adaptationLuminance, maxLuminance):
         
@@ -251,12 +285,12 @@ class reinhard(hdr.HDR):
             print("Luminance scaled...")
             self.appendLog("Luminance scaled...")
             '''local contrast calculation'''
-            Vs, V1 = self.getLocalContrast(scaledLuminance)
+            Vs = self.getLocalContrast(scaledLuminance)
             print("Local contrast obtained.")
             self.appendLog("Local contrast obtained.")
             print("Calculating adaptation luminance...")
             self.appendLog("Calculating adaptation luminance...")
-            adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, V1, self.maxval)           
+            #adaptationLuminance = self.getAdaptationImage(scaledLuminance, Vs, self.maxval)           
             '''Range compression'''
             print("Range compression.")
             self.appendLog("Range compression.")
@@ -264,7 +298,7 @@ class reinhard(hdr.HDR):
             '''Changing luminance'''
             print("Modifying luminance...")
             self.appendLog("Modifying luminance...")
-            self.modifyLuminance(adaptationLuminance)
+            self.modifyLuminance(Vs)
             #self.modifyLuminance(self.getLuminanceFromRGB())            
             print("Image Transformed.")
             self.appendLog("Image Transformed.")
