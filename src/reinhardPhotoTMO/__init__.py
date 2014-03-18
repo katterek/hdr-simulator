@@ -128,7 +128,7 @@ class reinhard(hdr.HDR):
         alpha2 = alpha1*1.6
             
         V = np.zeros(shape=(self.srange, self.width, self.height))
-        Vs = np.zeros(shape=(self.width, self.height))
+        #Vs = np.zeros(shape=(self.width, self.height))
         adaptationLuminance = luminance
         #Vis = np.zeros(shape=(self.srange, self.width, self.height))
         V1s = np.zeros(shape=(self.width, self.height))
@@ -171,8 +171,13 @@ class reinhard(hdr.HDR):
                 for y in range(0, (self.height)):
                     self.appendLog("Vs[s,x,y] = ("+ str(V1s[x,y]) + "-" + str(V2s[x,y]) + ")/( "+ str(np.power(2,self.phi*self.key)) +"/(" + str(s^2) + "+" + str(V1s[x,y])+")")
                     V[s,x,y] = (V1s[x,y] - V2s[x,y])/((np.power(2,self.phi*self.key))/(s^2) + V1s[x,y])
-                    Vs[x,y] = V[s,x,y]
-                    adaptationLuminance[x,y] = self.getAdaptationImage(luminance[x,y], Vs[x,y], self.maxval)
+                    print(str(self.threshold*luminance[x,y]))
+                    if (V[s,x,y]>self.threshold*luminance[x,y]):
+                        adaptationLuminance[x,y] = 33
+                        #adaptationLuminance[x,y] = self.maxval*luminance/(1+V[s,x,y])
+                        print("Adaptation pixel obtained for: [" + str(s)+","+str(x)+","+str(y)+"]: " + str(adaptationLuminance[x,y]) + "from: " + str(luminance[x,y]))
+                    else: 
+                        print("Never enters the loop! Why?") 
         return adaptationLuminance
     
     

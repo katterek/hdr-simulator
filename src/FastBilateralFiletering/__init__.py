@@ -41,9 +41,8 @@ class durandAndDorsey(hdr.HDR):
         self.lda = 80
         self.cmax = 100
     
-    def bilateralFilter(self, data, edge, edgeMin, edgeMax,sigmaSpatial, sigmaRange,samplingSpatial, samplingRange):
-        '''    
-        try:
+    '''def bilateralFilter(self, data, edge, edgeMin, edgeMax,sigmaSpatial, sigmaRange,samplingSpatial, samplingRange):
+    try:
             
         except LowerThan2:
             
@@ -105,54 +104,76 @@ class durandAndDorsey(hdr.HDR):
         error( 'data and edge must be of the same size' );
     end
     '''
+    
+    def bilateralFilter(self, data, sigmaRange, sigmaSpatial):
+        
+        edge = data
+        
+        edgeMin = np.min(edge)
+        edgeMax = np.max(edge)
+        
+        edgeDelta = edgeMax - edgeMin
+    
+        samplingRange = sigmaRange
+        samplingSpatial = sigmaSpatial
+        
         '''parameters'''
-        derivedSigmaSpatial = sigmaSpatial / samplingSpatial
-        derivedSigmaRange   = sigmaRange / samplingRange
+        derivedSigmaSpatial = sigmaSpatial/samplingSpatial
+        derivedSigmaRange   = sigmaRange/samplingRange
+        
+        paddingXY = np.floor(2*derivedSigmaSpatial) + 1
+        paddingZ = np.floor(2*derivedSigmaRange) + 1
+        
+        derivedSigmaSpatialFl = np.zeros(shape=(derivedSigmaSpatial))
+        derivedSigmaRangeFl = np.zeros(shape=(derivedSigmaRange))        
         
         for i in range(0, len(derivedSigmaSpatial)):
             
-            derivedSigmaSpatialFl[i] = np.floor(2*derivedSigmaSpatial[i])+1
-            
-            '''allocate 3D grid'''
-            downsampledWidthp[i]  = np.floor( ( inputWidth - 1 ) / samplingSpatial ) + 1 + 2 * paddingXY[i]
-            downsampledHeight[i]  = np.floor( ( inputHeight - 1 )/ samplingSpatial ) + 1 + 2 * paddingXY[i]
-        
+            derivedSigmaSpatialFl[i] = np.floor(2*derivedSigmaSpatial[i])+1        
         
         for i in range(0, len(derivedSigmaRange)):
             
             derivedSigmaRangeFl[i] = np.floor(2*derivedSigmaRange[i]) + 1
-            '''allocate 3D grid'''
-            downsampledDepth[i]  = np.floor( edgeDelta / samplingRange ) + 1 + 2 * paddingZ[i]
+        
+        '''allocate 3D grid'''
+        downsampledDepth  = np.floor(edgeDelta/samplingRange) + 1 + 2 * paddingZ
+        downsampledWidth  = np.floor((self.width-1) / samplingSpatial ) + 1 + 2 * paddingXY
+        downsampledHeight = np.floor((self.height-1)/ samplingSpatial ) + 1 + 2 * paddingXY
     
-        gridData    = np.zeros( shape = ( downsampledHeight, downsampledWidth, downsampledDepth ))
-        gridWeights = np.zeros( shape = ( downsampledHeight, downsampledWidth, downsampledDepth ))
+        gridData    = np.zeros( shape =(downsampledHeight, downsampledWidth, downsampledDepth))
+        gridWeights = np.zeros( shape =(downsampledHeight, downsampledWidth, downsampledDepth))
     
         '''compute downsampled indices'''
-        ii=np.linspace(0, inputWidth-1, inputWidth)
-        jj=np.linspace(0, inputHeight-1, inputHeight)
+        ii=np.linspace(0, self.width-1, self.width)
+        jj=np.linspace(0, self.height-1, self.height)
     
         jj,ii = np.meshgrid(jj, ii)
         
         ''' so when iterating over ii( k ), jj( k )
-        % get: ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ... (down columns first)'''
+        get: ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ... (down columns first)'''
         
-        '''?????????''''
-        di = np.round( ii / samplingSpatial ) + paddingXY + 1
-        dj = np.round( jj / samplingSpatial ) + paddingXY + 1
-        dz = np.round( ( edge - edgeMin ) / samplingRange ) + paddingZ + 1;
+        di = np.zeros(shape=(self.width, self.height))
+        dj = np.zeros(shape=(self.width, self.height))    
+        
+        for i in range(0, self.width):
+            for j in range(0,self.height):
+                di[i,j] = np.round(ii[i,j]/samplingSpatial) + paddingXY + 1
+                dj[i,j] = np.round(jj[i,j]/samplingSpatial) + paddingXY + 1        
+        
+        dz = np.round((edge - edgeMin)/samplingRange) + paddingZ + 1
     
         '''perform scatter (there's probably a faster way than this)
         normally would do downsampledWeights( di, dj, dk ) = 1, but we have to
         perform a summation to do box downsampling'''
-        for k = 1 : numel( dz ),
-               
-            dataZ = data( k ); 
+        for k in range(0, np.size(dz)):
+            dataZ = data(k)
             ''' traverses the image column wise, same as di( k )'''
-            if ~isnan( dataZ  ),
-                
-                dik = di( k );
-                djk = dj( k );
-                dzk = dz( k );
+            #if ~isnan(dataZ):
+            
+            '''solve how to treat K!!!'''
+            dik = di(k)
+            djk = dj(k)
+            dzk = dz(k)
         
                 gridData( dik, djk, dzk ) = gridData( dik, djk, dzk ) + dataZ;
                 gridWeights( dik, djk, dzk ) = gridWeights( dik, djk, dzk ) + 1;
@@ -163,9 +184,9 @@ class durandAndDorsey(hdr.HDR):
         kernelHeight = kernelWidth
         kernelDepth  = 2 * derivedSigmaRange + 1
         
-        halfKernelWidth  = np.floor( kernelWidth / 2 )
-        halfKernelHeight = np.floor( kernelHeight / 2 )
-        halfKernelDepth  = np.floor( kernelDepth / 2 )
+        halfKernelWidth  = np.floor(kernelWidth / 2 )
+        halfKernelHeight = np.floor(kernelHeight / 2 )
+        halfKernelDepth  = np.floor(kernelDepth / 2 )
         
         if (kernelWidth & 0x1):
             gridX=np.linspace(-halfkernelWidth, halfkernelWidth+1, kernelWidth+1)
@@ -205,7 +226,7 @@ class durandAndDorsey(hdr.HDR):
         '''blurredGridWeights( blurredGridWeights < -1 ) = 0; % put zeros back'''
         
         '''upsample'''
-        [ jj, ii ] = meshgrid( 0 : inputWidth - 1, 0 : inputHeight - 1 ); % meshgrid does x, then y, so output arguments need to be reversed
+        [ jj, ii ] = meshgrid( 0 : self.width - 1, 0 : self.height - 1 ); # meshgrid does x, then y, so output arguments need to be reversed
         '''no rounding'''
         di = ( ii / samplingSpatial ) + paddingXY + 1;
         dj = ( jj / samplingSpatial ) + paddingXY + 1;
@@ -221,81 +242,70 @@ class durandAndDorsey(hdr.HDR):
         
         '''default parameters'''
        
-        sigma_r=4
-        sigma_s=0.5
+        rangeS = 4
+        spatialS = 0.5
+        
+        tmp = np.zeros(shape = (self.width, self.height))
+        Base = np.zeros(shape = (self.width, self.height))
+        Detail = np.zeros(shape = (self.width, self.height))
 
-        '''Base Layer'''
         for x in range(0, self.width):
             for y in range (0, self.height):
-                tmp[x,y] = np.log(img[x,y]+1)
-        tmp=np.log2(img+1)
+                tmp[x,y] = np.log(img[x,y]+1)        
+        
+        imgFil = self.bilateralFilter(tmp,rangeS,spatialS)
 
-        try
-            imgFil = bilateralFilter(tmp,[],min(min(tmp)),max(max(tmp)),sigma_s,sigma_r)
-        catch exception
-            imgFil = bilateralFilter(tmp)
-
-        Base=2.^(imgFil)-1
-
+        '''Extracting Base and Detail Layers'''
         '''Removing 0'''
-        Base(find(Base<0))=0
-
-        '''Detail Layer'''
-        Detail=RemoveSpecials(img./Base);
+        for x in range(0,self.width):
+            for y in range(0, self.height):
+                Base[x,y]=np.power(2,imgFil[x,y])-1
+                if (Base[x,y]<0):
+                    Base[x,y] = 0
+                    Detail[x,y] = self.maxLum
+                else:
+                    Detail[x,y] = (img[x,y]/Base[x,y])
         
         return Base, Detail
 
     
     def transform(self):
-        #TO-DO:
+        
         if (self.checkColorCoordinates()==False):
             print("Can't proceed with the algorithm execution, wrong colour coordinates")
             #TO DO: convert to RGB
-        else:#DOEVERYTHING
+        else:
             
             lumChan = self.getLuminanceFromRGB()
-            #what is that??
-            col = np.size(img,3);
+            #img(:,:,i) = RemoveSpecials(img(:,:,i)./lumChan)
 
-            #Chroma
-            for i in range(1,col):
-                img(:,:,i) = RemoveSpecials(img(:,:,i)./lumChan)
-
-            #Fine details and base separation
-            [Lbase,Ldetail]=self.BilateralSeparation(lumChan)
+            '''Fine details and base separation'''
+            Lbase,Ldetail=self.BilateralSeparation(lumChan)
             
-            #tumblin-rushmeier TMO here
+            '''tumblin-rushmeier TMO here'''
             
-            for i in range(1, col):
-                img(:,:,i)=img(:,:,i).*Lbase;
-
-            image = realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, default)
-            hdrImage = image.transform()
-            imgOut = self.TumblinRushmeierTMO(self.img, self.Lda, self.CMax)
-
-            #Adding details back
-            for i in range(1, col)
-                imgOut(:,:,i) = imgOut(:,:,i).*Ldetail
+            for z in range(0, col):
+                for x in range(0,self.width):
+                    for y in range(0,self.height):
+                        lumChan[x,y]=lumChan[x,y]*Lbase[x,y,z]
             
+            '''save img into a temporary location'''
+            self.luminance = lumChan            
+            tempFile = self.saveTemp()
+            
+            Lda = 0
+            LdMax = 0
+            CMax = 0            
+            
+            image = realisticImages.tumblinAndRushmeier(tempFile, Lda, LdMax,CMax, 1)
+            imgOut = image.transform()
 
-            #Edge-preserving filter
-            #Edge-preserving as a robust statistical estimation
-            #Acceleration!
-                #Piecewise-linear bilateral filtering
-                #subsampling
-                    '''FastBilateral(Image I, spatialKernel fthethas, intensityInfluence gthethar, 
-                    downsamplingFactor z)
-                        J = 0 /*set the fullscale output to zero*/
-                        I' = downsample(I, z)
-                        f'thethas/z = downsample(fthethas, z)
-                        for j = 0:NB_SEGMENTS
-                            i^j = min(I) +jx(max(I) - min(I))/NB_SEGMENTS
-                            G'^j  = G'j(x)f'thethas/z /*normalization factor*/
-                            H'^j = G'j(x)I'  /*compute H for each pixel*/
-                            H'^*j = H'j(x)f'thethas/z
-                            J'^j = H'^*j/k'^j   /*normalize*/
-                            J^j = upsample(J'^j, z)
-                            J = J + J^j x InterpolationWeight(I, id)
-                    '''
-                #Contrast Reduction
+            '''Adding details back'''
+            for x in range(0,self.width):
+                for t in range(0,self.height):
+                    imgOut[x,y] = imgOut[x,y]*Ldetail[x,y,z]
+            '''Modifying the image luminance'''
+            self.modifyLuminance(imgOut)
+            return self
+
                 

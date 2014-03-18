@@ -4,10 +4,6 @@ Created on 31 Dec 2013
 @author: green
 '''
 
-
-__author__ = 'Nick Bailey <nick@n-ism.org>'
-__version__ = 1.0
-
 class Operator:
     """ The base class of all operators.
         This class performs no operation, and returns the string 'Unimplemented'
