@@ -166,17 +166,17 @@ class durandAndDorsey(hdr.HDR):
         normally would do downsampledWeights( di, dj, dk ) = 1, but we have to
         perform a summation to do box downsampling'''
         for k in range(0, np.size(dz)):
-            dataZ = data(k)
+            dataZ = data[k]
             ''' traverses the image column wise, same as di( k )'''
             #if ~isnan(dataZ):
             
             '''solve how to treat K!!!'''
-            dik = di(k)
-            djk = dj(k)
-            dzk = dz(k)
+            dik = di[k]
+            djk = dj[k]
+            dzk = dz[k]
         
-                gridData( dik, djk, dzk ) = gridData( dik, djk, dzk ) + dataZ;
-                gridWeights( dik, djk, dzk ) = gridWeights( dik, djk, dzk ) + 1;
+            gridData[dik,djk,dzk] = gridData[dik, djk, dzk] + dataZ
+            gridWeights[dik,djk,dzk] = gridWeights[dik, djk, dzk] + 1
                 
         
         '''make gaussian kernel'''
@@ -184,18 +184,18 @@ class durandAndDorsey(hdr.HDR):
         kernelHeight = kernelWidth
         kernelDepth  = 2 * derivedSigmaRange + 1
         
-        halfKernelWidth  = np.floor(kernelWidth / 2 )
-        halfKernelHeight = np.floor(kernelHeight / 2 )
-        halfKernelDepth  = np.floor(kernelDepth / 2 )
+        halfkernelWidth  = np.floor(kernelWidth / 2 )
+        halfkernelHeight = np.floor(kernelHeight / 2 )
+        halfkernelDepth  = np.floor(kernelDepth / 2 )
         
         if (kernelWidth & 0x1):
             gridX=np.linspace(-halfkernelWidth, halfkernelWidth+1, kernelWidth+1)
         else:
             gridX=np.linspace(-halfkernelWidth, halfkernelWidth, kernelWidth+1)
         if (kernelHeight & 0x1):
-            gridY=np.linspace(-halfkernelWidth, halfkernelHeighth+1, kernelHeight+1)
+            gridY=np.linspace(-halfkernelWidth, halfkernelHeight+1, kernelHeight+1)
         else:
-            gridY=np.linspace(-halfkernelWidth, halfkernelHeighth, kernelHeight+1)
+            gridY=np.linspace(-halfkernelWidth, halfkernelHeight, kernelHeight+1)
         if (kernelDepth & 0x1):
             gridZ=np.linspace(-halfkernelDepth, halfkernelDepth+1, kernelDepth+1)
         else:
@@ -209,7 +209,7 @@ class durandAndDorsey(hdr.HDR):
         '''TO-DO:figure out indices'''
         for x in range(0, kernelHeight+1):
             for y in range(0, kernelWidth):
-                for x in range(0, kernelDepth):
+                for z in range(0, kernelDepth):
                     gridRSquared[z,x,y] = (np.power(gridX[z,x,y],2) + np.power(gridX[z,x,y],2))/(np.power(derivedSigmaSpatial,2))+(np.power(gridZ[z,x,y],2))/(np.power(derivedSigmaRange,2))
                     kernel[z,x,y] = np.exp(-0.5 * gridRSquared[z,x,y])
         
@@ -217,23 +217,32 @@ class durandAndDorsey(hdr.HDR):
         blurredGridData = self.convolve2d( gridData, kernel)
         blurredGridWeights = self.convolve2d( gridWeights, kernel)
         
+        normalizedBlurredGrid = np.zeros(shape=(len(blurredGridWeights)))
         '''divide'''
-        blurredGridWeights( blurredGridWeights == 0 ) = -2; # avoid divide by 0, won't read there anyway
-        normalizedBlurredGrid = blurredGridData ./ blurredGridWeights
-        normalizedBlurredGrid( blurredGridWeights < -1 ) = 0 #put 0s where it's undefined
+        for i in range(0, len(blurredGridWeights)):
+            if (blurredGridWeights[i]==0):
+                blurredGridWeights[i] = -2
+            elif (blurredGridWeights[i]<-1):
+                blurredGridWeights[i]=0
+            normalizedBlurredGrid[i] = blurredGridData[i] / blurredGridWeights[i]
         
         '''for debugging'''
         '''blurredGridWeights( blurredGridWeights < -1 ) = 0; % put zeros back'''
         
         '''upsample'''
-        [ jj, ii ] = meshgrid( 0 : self.width - 1, 0 : self.height - 1 ); # meshgrid does x, then y, so output arguments need to be reversed
+        jj, ii = np.meshgrid( gridX, gridY, gridZ)
+        ii=np.linspace(0, self.width-1, self.width)
+        jj=np.linspace(0, self.height-1, self.height)
         '''no rounding'''
-        di = ( ii / samplingSpatial ) + paddingXY + 1;
-        dj = ( jj / samplingSpatial ) + paddingXY + 1;
-        dz = ( edge - edgeMin ) / samplingRange + paddingZ + 1;
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                di[x,y] = (ii[x,y] / samplingSpatial ) + paddingXY + 1
+                dj[x,y] = (jj[x,y] / samplingSpatial ) + paddingXY + 1
+                dz = (edge - edgeMin) / samplingRange + paddingZ + 1
         
         '''interpn takes rows, then cols, etc
         i.e. size(v,1), then size(v,2), ...'''
+                '''multidimentional data interpolation'''
         output = interpn( normalizedBlurredGrid, di, dj, dz );
                 
         return output
