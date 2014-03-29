@@ -4,11 +4,12 @@ import trackingslider
 import sys
 import selector
 import hdr
-import realisticImages
-import reinhardPhotoTMO
+import hdr.realisticImages
+import hdr.reinhardPhotoTMO
+import hdr.fastBilateralFiltering
 import inspect
-#import FastBilateralFilering #@UnresolvedImport
-import gradientDomainCompression #@UnresolvedImport
+#import gradientDomainCompression
+
 
 class ImageViewer(QtGui.QMainWindow):
     def __init__(self):
@@ -116,29 +117,36 @@ class ImageViewer(QtGui.QMainWindow):
         
     def loadParameters(self,i,result):
         if(i==1):
+            print("Photographic Tone Mapping Operator")
             key=result[0]
             phi=result[1]
             threshold=result[2]
             srange=result[3]
             default=result[4]
             print("Key: "+ str(key) + ", Threshold:" + str(threshold) + " .Phi: " + str(phi) + ", SRange" + str(srange))
-            image = reinhardPhotoTMO.reinhard(self.imagePath, key, threshold, phi, srange, default)
+            image = hdr.reinhardPhotoTMO.reinhard(self.imagePath, key, threshold, phi, srange, default)
             hdrImage = image.transform()
-        elif(i==0):
-            fBeta=result[0]
-            default=result[1]
-            image = gradientDomainCompression.fattal(self.imagePath, fBeta, default)
-            hdrImage = image.transform()
-            
-        elif(i==2):
+        #elif(i==4):
+        #    fBeta=result[0]
+        #    default=result[1]
+        #    image = gradientDomainCompression.fattal(self.imagePath, fBeta, default)
+        #    hdrImage = image.transform()
+        elif(i==3):
+            print("Realistic Images")            
             Lda=result[0]
-            Lwa = result
             LdMax=result[1]
             CMax=result[2]
             default=result[3]
-            image = realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, default)
+            image = hdr.realisticImages.tumblinAndRushmeier(self.imagePath, Lda, LdMax,CMax, default)
             hdrImage = image.transform()
             
+        elif(i==2):
+            print("Fast Bilateral Filtering")
+            Lda=result[0]
+            CMax=result[1]
+            default=result[2]
+            image = hdr.fastBilateralFiltering.durandAndDorsey(self.imagePath, Lda, CMax, default)
+            hdrImage = image.transform()
         else:
             image=result
         
@@ -246,9 +254,9 @@ class ImageViewer(QtGui.QMainWindow):
                                 + ((factor - 1) * scrollBar.pageStep()/2)))
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
 
-    app = QtGui.QApplication(sys.argv)
-    imageViewer = ImageViewer()
-    imageViewer.show()
-    sys.exit(app.exec_())
+#    app = QtGui.QApplication(sys.argv)
+#    imageViewer = ImageViewer()
+#    imageViewer.show()
+#    sys.exit(app.exec_())

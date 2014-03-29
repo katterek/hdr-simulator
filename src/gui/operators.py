@@ -15,7 +15,7 @@ class Operator:
     Checkbox, Slider = range(2)
     def opName(self):
         """ Return a short, human-readable description """
-        return 'No operation'
+        return 'Choose operator'
   
     def getGuiComponents(self):
         """ Return a list of gui components needed to gather input parameters """
@@ -26,7 +26,7 @@ class Operator:
         return 'Unimplemented'
 
 class PhotoTMOOperator(Operator):
-    """ Provides control over Phtographic Tone Reproduction parameters """
+    """ Provides control over Photographic Tone Reproduction parameters """
 
     def opName(self):
         return 'Photographic Tone Reproduction'
@@ -44,19 +44,35 @@ class PhotoTMOOperator(Operator):
         default = val[4]
         return key, phi, threshold, srange, default
     
-class gradientDomainCompression(Operator):
-    """ Provides control over Gradient Domain Compression parameters """
+class SFBilateral(Operator):
+    """ Provides control over Fast Bilateral Filtering Tone Mapping parameters """
 
     def opName(self):
-        return 'Gradient Domain Compression'
+        return 'Fast Bilateral Filtering'
     def getGuiComponents(self):
-        return [ [Operator.Slider, 'fBeta:', 1, 11],[Operator.Checkbox, 'Use Default Values']]
+        return [[Operator.Slider, 'Lda:', 10, 30],[Operator.Slider, 'CMax:', 30, 100], 
+                [Operator.Checkbox, 'Use Default Values']]
         
     
     def invoke(self, val):
-        fBeta=val[0]
-        default = val[1]
-        return fBeta, default
+        Lda=val[0]
+        CMax=val[1]
+        default = val[2]
+        return Lda, CMax, default
+    
+#class gradientDomainCompression(Operator):
+#    """ Provides control over Gradient Domain Compression parameters """
+#
+#    def opName(self):
+#        return 'Gradient Domain Compression'
+#    def getGuiComponents(self):
+#        return [ [Operator.Slider, 'fBeta:', 1, 11],[Operator.Checkbox, 'Use Default Values']]
+#        
+#    
+#    def invoke(self, val):
+#        fBeta=val[0]
+#        default = val[1]
+#        return fBeta, default
 
 class TumblinAndRushmeier(Operator):
     """ Provides control over Realistic Images Tone Reproduction parameters """
@@ -75,3 +91,6 @@ class TumblinAndRushmeier(Operator):
         CMax=val[2]
         default = val[3]
         return Lda, LdMax, CMax, default
+    
+
+    
